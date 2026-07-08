@@ -42,6 +42,8 @@ class Scene(models.Model):
         return f'{self.book.title} - {label}'
 
     def save(self, *args, **kwargs):
+        old_glb_model = self._old_file_name('glb_model')
+
         if not self.qr_code:
             base = slugify(self.book.title)[:32] if self.book_id else 'book'
             self.qr_code = f'{base}-scene-{uuid4().hex[:10]}'
@@ -54,6 +56,12 @@ class Scene(models.Model):
             )
 
         super().save(*args, **kwargs)
+        self._delete_replaced_file(old_glb_model, self.glb_model)
+
+    def delete(self, *args, **kwargs):
+        glb_model = self.glb_model
+        super().delete(*args, **kwargs)
+        self._delete_file(glb_model)
 
     def _qr_code_changed(self):
         if not self.pk:
@@ -72,3 +80,26 @@ class Scene(models.Model):
         buffer = BytesIO()
         image.save(buffer, format='PNG')
         return ContentFile(buffer.getvalue())
+
+    def _old_file_name(self, field_name):
+        if not self.pk:
+            return None
+
+        return (
+            Scene.objects
+            .filter(pk=self.pk)
+            .values_list(field_name, flat=True)
+            .first()
+        )
+
+    def _delete_replaced_file(self, old_name, current_file):
+        if old_name and old_name != current_file.name:
+            self._delete_file_by_name(old_name)
+
+    def _delete_file(self, file_field):
+        if file_field:
+            self._delete_file_by_name(file_field.name)
+
+    def _delete_file_by_name(self, file_name):
+        if self.glb_model.storage.exists(file_name):
+            self.glb_model.storage.delete(file_name)

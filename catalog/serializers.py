@@ -17,8 +17,10 @@ class FileUrlMixin:
 class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
     book_title = serializers.CharField(source='book.title', read_only=True)
     audio_url = serializers.SerializerMethodField()
+    glb_model_name = serializers.SerializerMethodField()
     glb_model_url = serializers.SerializerMethodField()
     qr_image_url = serializers.SerializerMethodField()
+    remove_glb_model = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         model = Scene
@@ -32,7 +34,9 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
             'audio',
             'audio_url',
             'glb_model',
+            'glb_model_name',
             'glb_model_url',
+            'remove_glb_model',
             'prefab_key',
             'qr_code',
             'qr_image_url',
@@ -44,11 +48,29 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
     def get_audio_url(self, obj):
         return self._absolute_file_url(obj.audio)
 
+    def get_glb_model_name(self, obj):
+        if not obj.glb_model:
+            return None
+        return obj.glb_model.name.rsplit('/', 1)[-1]
+
     def get_glb_model_url(self, obj):
         return self._absolute_file_url(obj.glb_model)
 
     def get_qr_image_url(self, obj):
         return self._absolute_file_url(obj.qr_image)
+
+    def create(self, validated_data):
+        validated_data.pop('remove_glb_model', None)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        remove_glb_model = validated_data.pop('remove_glb_model', False)
+
+        if remove_glb_model and 'glb_model' not in validated_data:
+            instance.glb_model.delete(save=False)
+            instance.glb_model = None
+
+        return super().update(instance, validated_data)
 
 
 class TeacherBookSerializer(FileUrlMixin, serializers.ModelSerializer):

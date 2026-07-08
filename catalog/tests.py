@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
@@ -120,7 +121,59 @@ class TeacherApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertTrue(response.json()['qr_code'])
         self.assertTrue(response.json()['qr_image_url'])
+        self.assertEqual(response.json()['glb_model_name'], 'bosque.glb')
         self.assertTrue(response.json()['glb_model_url'].endswith('/media/scenes/models/bosque.glb'))
+
+    def test_replacing_glb_model_deletes_old_file(self):
+        book = Book.objects.create(title='Libro Demo', is_published=True)
+        scene = Scene.objects.create(
+            book=book,
+            text='Texto para Unity',
+            prefab_key='Bosque',
+            glb_model=SimpleUploadedFile(
+                'modelo-anterior.glb',
+                b'old glb content',
+                content_type='model/gltf-binary',
+            ),
+        )
+        old_path = Path(scene.glb_model.path)
+
+        scene.glb_model = SimpleUploadedFile(
+            'modelo-nuevo.glb',
+            b'new glb content',
+            content_type='model/gltf-binary',
+        )
+        scene.save()
+
+        self.assertFalse(old_path.exists())
+        self.assertTrue(Path(scene.glb_model.path).exists())
+
+    def test_teacher_can_remove_glb_model(self):
+        book = Book.objects.create(title='Libro Demo', is_published=True)
+        scene = Scene.objects.create(
+            book=book,
+            text='Texto para Unity',
+            prefab_key='Bosque',
+            glb_model=SimpleUploadedFile(
+                'modelo-removible.glb',
+                b'glb content',
+                content_type='model/gltf-binary',
+            ),
+        )
+        old_path = Path(scene.glb_model.path)
+
+        response = self.client.patch(
+            reverse('teacher-scene-detail', kwargs={'pk': scene.pk}),
+            {'remove_glb_model': True},
+            content_type='application/json',
+        )
+
+        scene.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['glb_model_name'])
+        self.assertIsNone(response.json()['glb_model_url'])
+        self.assertFalse(scene.glb_model)
+        self.assertFalse(old_path.exists())
 
     def test_teacher_api_requires_staff_user(self):
         self.client.logout()
