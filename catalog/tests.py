@@ -2,6 +2,7 @@ import shutil
 import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -66,4 +67,64 @@ class UnitySceneEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-# Create your tests here.
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
+class TeacherApiTests(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
+    def setUp(self):
+        self.teacher = get_user_model().objects.create_user(
+            username='docente',
+            password='test-pass',
+            is_staff=True,
+        )
+        self.client.force_login(self.teacher)
+
+    def test_teacher_can_create_book(self):
+        response = self.client.post(
+            reverse('teacher-book-list'),
+            {
+                'title': 'Cuento del bosque',
+                'description': 'Libro de prueba',
+                'is_published': True,
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['title'], 'Cuento del bosque')
+        self.assertTrue(response.json()['is_published'])
+
+    def test_teacher_can_create_scene_with_glb_and_get_qr(self):
+        book = Book.objects.create(title='Libro Demo', is_published=True)
+
+        response = self.client.post(
+            reverse('teacher-scene-list'),
+            {
+                'book': book.id,
+                'title': 'Escena con modelo',
+                'order': 1,
+                'text': 'Texto para Unity',
+                'prefab_key': 'Bosque',
+                'glb_model': SimpleUploadedFile(
+                    'bosque.glb',
+                    b'glTF binary test content',
+                    content_type='model/gltf-binary',
+                ),
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json()['qr_code'])
+        self.assertTrue(response.json()['qr_image_url'])
+        self.assertTrue(response.json()['glb_model_url'].endswith('/media/scenes/models/bosque.glb'))
+
+    def test_teacher_api_requires_staff_user(self):
+        self.client.logout()
+
+        response = self.client.get(reverse('teacher-book-list'))
+
+        self.assertIn(response.status_code, (302, 403))
