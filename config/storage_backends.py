@@ -1,4 +1,4 @@
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 from django.conf import settings
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -13,5 +13,5 @@ class SupabaseMediaStorage(S3Boto3Storage):
         if not public_base_url:
             return super().url(name, parameters=parameters, expire=expire, http_method=http_method)
 
-        clean_name = self._normalize_name(self._clean_name(name)).lstrip('/')
-        return urljoin(f'{public_base_url}/', clean_name)
+        clean_name = str(name).replace('\\', '/').lstrip('/')
+        return urljoin(f'{public_base_url}/', quote(clean_name))
