@@ -20,3 +20,7 @@ services:
         value: "True"
       - key: SECRET_KEY
         generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL_REQUIRE
+        value: "True"

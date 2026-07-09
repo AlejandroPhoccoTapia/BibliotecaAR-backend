@@ -30,9 +30,15 @@ SECRET_KEY=<generada por Render>
 ALLOWED_HOSTS=<tu-servicio>.onrender.com
 CSRF_TRUSTED_ORIGINS=https://<tu-servicio>.onrender.com
 CORS_ALLOWED_ORIGINS=https://<tu-frontend-vercel>.vercel.app
+DATABASE_URL=<connection string de Supabase PostgreSQL>
+DB_SSL_REQUIRE=True
 SERVE_MEDIA_FILES=True
 SECURE_SSL_REDIRECT=True
 ```
+
+Para usar Supabase, copia la cadena de conexion PostgreSQL desde Project Settings > Database.
+En Render agregala como `DATABASE_URL`. Si Supabase entrega una URL con `postgresql://`,
+puedes pegarla directamente. Mantén `DB_SSL_REQUIRE=True` para conexiones seguras.
 
 Si luego conectas un frontend en Vercel, agrega su dominio a `CSRF_TRUSTED_ORIGINS`.
 
