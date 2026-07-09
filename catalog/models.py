@@ -21,6 +21,23 @@ class Book(models.Model):
         return self.title
 
 
+class StudentProfile(models.Model):
+    full_name = models.CharField(max_length=180)
+    classroom = models.CharField(max_length=80, blank=True)
+    photo = models.ImageField(upload_to='students/faces/', blank=True, null=True)
+    face_signature = models.JSONField(blank=True, null=True)
+    assigned_books = models.ManyToManyField(Book, related_name='assigned_students', blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['full_name']
+
+    def __str__(self):
+        return self.full_name
+
+
 class Scene(models.Model):
     book = models.ForeignKey(Book, related_name='scenes', on_delete=models.CASCADE)
     title = models.CharField(max_length=180, blank=True)

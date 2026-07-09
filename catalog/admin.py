@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Book, Scene
+from .models import Book, Scene, StudentProfile
 
 
 class SceneInline(admin.TabularInline):
@@ -53,3 +53,23 @@ class SceneAdmin(admin.ModelAdmin):
         if obj.qr_image:
             return format_html('<img src="{}" style="width:160px;height:160px;" />', obj.qr_image.url)
         return '-'
+
+
+@admin.register(StudentProfile)
+class StudentProfileAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'classroom', 'is_active', 'has_face_signature', 'updated_at')
+    list_filter = ('is_active', 'classroom')
+    search_fields = ('full_name', 'classroom')
+    filter_horizontal = ('assigned_books',)
+    readonly_fields = ('face_preview', 'has_face_signature')
+
+    def face_preview(self, obj):
+        if obj.photo:
+            return format_html('<img src="{}" style="width:120px;height:120px;object-fit:cover;" />', obj.photo.url)
+        return '-'
+
+    def has_face_signature(self, obj):
+        return bool(obj.face_signature)
+
+    has_face_signature.boolean = True
+    has_face_signature.short_description = 'Rostro registrado'

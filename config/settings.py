@@ -129,3 +129,5 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+FACE_RECOGNITION_DISTANCE_THRESHOLD = 0.45

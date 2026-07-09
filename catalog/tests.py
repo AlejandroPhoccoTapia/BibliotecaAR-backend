@@ -1,13 +1,15 @@
 import shutil
 import tempfile
+from io import BytesIO
 from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image, ImageDraw
 
-from .models import Book, Scene
+from .models import Book, Scene, StudentProfile
 
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
@@ -181,3 +183,60 @@ class TeacherApiTests(TestCase):
         response = self.client.get(reverse('teacher-book-list'))
 
         self.assertIn(response.status_code, (302, 403))
+
+    def test_teacher_can_create_student_with_face_signature_and_books(self):
+        book = Book.objects.create(title='Libro asignado', is_published=True)
+
+        response = self.client.post(
+            reverse('teacher-student-list'),
+            {
+                'full_name': 'Ana Torres',
+                'classroom': 'Inicial 5',
+                'photo': face_image_upload('ana.png'),
+                'assigned_books': [book.id],
+                'is_active': True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        student = StudentProfile.objects.get(pk=response.json()['id'])
+        self.assertTrue(student.face_signature)
+        self.assertEqual(list(student.assigned_books.values_list('id', flat=True)), [book.id])
+        self.assertTrue(response.json()['has_face_signature'])
+
+    def test_student_face_login_returns_matching_student(self):
+        book = Book.objects.create(title='Libro asignado', is_published=True)
+        student = StudentProfile.objects.create(
+            full_name='Ana Torres',
+            classroom='Inicial 5',
+            photo=face_image_upload('ana.png'),
+            is_active=True,
+        )
+        from .face_recognition import build_face_signature
+        student.face_signature = build_face_signature(student.photo)
+        student.save()
+        student.assigned_books.set([book])
+
+        self.client.logout()
+        response = self.client.post(
+            reverse('student-face-login'),
+            {'image': face_image_upload('ana-login.png')},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['student']['full_name'], 'Ana Torres')
+        self.assertEqual(response.json()['student']['assigned_books'][0]['title'], 'Libro asignado')
+
+
+def face_image_upload(name):
+    image = Image.new('RGB', (180, 180), 'white')
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((45, 30, 135, 125), fill=(220, 170, 135), outline=(80, 60, 50), width=3)
+    draw.ellipse((70, 65, 82, 78), fill='black')
+    draw.ellipse((104, 65, 116, 78), fill='black')
+    draw.arc((72, 78, 115, 110), 15, 165, fill=(120, 40, 40), width=3)
+    draw.rectangle((65, 125, 115, 160), fill=(80, 150, 210))
+
+    buffer = BytesIO()
+    image.save(buffer, format='PNG')
+    return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
