@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
 from .face_recognition import FaceRecognitionError, build_face_signature
 from .models import Book, Scene, StudentProfile
@@ -13,6 +14,27 @@ class FileUrlMixin:
         if request:
             return request.build_absolute_uri(file_field.url)
         return file_field.url
+
+
+class TeacherRegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(min_length=8, write_only=True)
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+
+    def validate_username(self, value):
+        if get_user_model().objects.filter(username=value).exists():
+            raise serializers.ValidationError('Este usuario ya existe.')
+        return value
+
+    def create(self, validated_data):
+        return get_user_model().objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            is_staff=True,
+        )
 
 
 class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):

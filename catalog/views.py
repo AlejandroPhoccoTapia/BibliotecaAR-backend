@@ -1,5 +1,6 @@
 from django.db.models import Count
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -17,6 +18,7 @@ from .serializers import (
     StudentFaceLoginResultSerializer,
     StudentFaceLoginSerializer,
     TeacherBookSerializer,
+    TeacherRegisterSerializer,
     TeacherSceneSerializer,
     TeacherStudentSerializer,
     UnitySceneSerializer,
@@ -76,6 +78,37 @@ class TeacherLoginView(APIView):
                 'last_name': user.last_name,
             },
         })
+
+
+class TeacherRegisterView(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser, FormParser]
+
+    def post(self, request):
+        has_teacher = get_user_model().objects.filter(is_staff=True).exists()
+        if has_teacher and not (request.user.is_authenticated and request.user.is_staff):
+            return Response(
+                {'detail': 'Solo un docente autenticado puede crear otra cuenta docente.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = TeacherRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        login(request, user)
+        return Response(
+            {
+                'is_authenticated': True,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'is_staff': user.is_staff,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TeacherLogoutView(APIView):

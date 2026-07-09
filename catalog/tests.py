@@ -208,6 +208,53 @@ class TeacherApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()['is_authenticated'])
 
+    def test_first_teacher_can_register_without_existing_teacher(self):
+        self.client.logout()
+        get_user_model().objects.all().delete()
+
+        response = self.client.post(
+            reverse('teacher-register'),
+            {
+                'username': 'primer-docente',
+                'password': 'strong-pass-123',
+                'first_name': 'Primer',
+                'last_name': 'Docente',
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json()['is_authenticated'])
+        user = get_user_model().objects.get(username='primer-docente')
+        self.assertTrue(user.is_staff)
+
+    def test_anonymous_user_cannot_register_second_teacher(self):
+        self.client.logout()
+
+        response = self.client.post(
+            reverse('teacher-register'),
+            {
+                'username': 'otro-docente',
+                'password': 'strong-pass-123',
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_authenticated_teacher_can_register_another_teacher(self):
+        response = self.client.post(
+            reverse('teacher-register'),
+            {
+                'username': 'colega',
+                'password': 'strong-pass-123',
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(get_user_model().objects.get(username='colega').is_staff)
+
     def test_teacher_can_create_student_with_face_signature_and_books(self):
         book = Book.objects.create(title='Libro asignado', is_published=True)
 

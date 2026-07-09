@@ -5,6 +5,7 @@ from .views import (
     StudentFaceLoginView,
     TeacherLoginView,
     TeacherLogoutView,
+    TeacherRegisterView,
     TeacherSessionView,
     TeacherBookViewSet,
     TeacherSceneViewSet,
@@ -22,6 +23,7 @@ router.register('teacher/students', TeacherStudentViewSet, basename='teacher-stu
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/me/', TeacherSessionView.as_view(), name='teacher-session'),
+    path('auth/register/', TeacherRegisterView.as_view(), name='teacher-register'),
     path('auth/login/', TeacherLoginView.as_view(), name='teacher-login'),
     path('auth/logout/', TeacherLogoutView.as_view(), name='teacher-logout'),
     path('student/face-login/', StudentFaceLoginView.as_view(), name='student-face-login'),

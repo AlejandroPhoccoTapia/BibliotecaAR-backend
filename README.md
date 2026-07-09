@@ -60,6 +60,11 @@ La respuesta incluye `glb_model_url` cuando la escena tiene un modelo `.glb` car
 Requiere un usuario `is_staff=True`.
 
 ```http
+POST /api/auth/register/
+POST /api/auth/login/
+POST /api/auth/logout/
+GET /api/auth/me/
+
 GET /api/teacher/books/
 POST /api/teacher/books/
 GET /api/teacher/books/<id>/
@@ -74,3 +79,5 @@ DELETE /api/teacher/scenes/<id>/
 ```
 
 Usa `multipart/form-data` para subir `cover`, `audio` o `glb_model`.
+
+Si no existe ningun docente, `POST /api/auth/register/` permite crear la primera cuenta docente. Despues de eso, solo un docente autenticado puede crear otras cuentas docentes.
