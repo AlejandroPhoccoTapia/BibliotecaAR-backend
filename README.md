@@ -11,6 +11,32 @@ MVP en Django + Django REST Framework + SQLite para administrar libros/cuentos y
 .\.venv\Scripts\python manage.py runserver 0.0.0.0:8000
 ```
 
+## Deploy en Render
+
+Este repo incluye `render.yaml` y `build.sh`.
+
+En Render crea un Web Service desde GitHub y usa:
+
+```bash
+Build Command: bash build.sh
+Start Command: gunicorn config.wsgi:application
+```
+
+Variables de entorno recomendadas:
+
+```text
+DEBUG=False
+SECRET_KEY=<generada por Render>
+ALLOWED_HOSTS=<tu-servicio>.onrender.com
+CSRF_TRUSTED_ORIGINS=https://<tu-servicio>.onrender.com
+SERVE_MEDIA_FILES=True
+SECURE_SSL_REDIRECT=True
+```
+
+Si luego conectas un frontend en Vercel, agrega su dominio a `CSRF_TRUSTED_ORIGINS`.
+
+Nota: en el plan gratis de Render, los archivos subidos en `media/` pueden no ser persistentes despues de redeploys. Para demo esta bien; para datos importantes conviene Cloudinary o un disco persistente.
+
 ## Modelo inicial
 
 - `Book`: portada, titulo, descripcion y estado publicado.

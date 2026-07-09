@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: bibliotecaar-backend
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: bibliotecaar-backend.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://bibliotecaar-backend.onrender.com
+      - key: SERVE_MEDIA_FILES
+        value: "True"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: SECRET_KEY
+        generateValue: true
