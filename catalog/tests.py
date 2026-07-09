@@ -184,6 +184,30 @@ class TeacherApiTests(TestCase):
 
         self.assertIn(response.status_code, (302, 403))
 
+    def test_teacher_can_login_through_api(self):
+        self.client.logout()
+
+        response = self.client.post(
+            reverse('teacher-login'),
+            {
+                'username': 'docente',
+                'password': 'test-pass',
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['is_authenticated'])
+        self.assertEqual(response.json()['user']['username'], 'docente')
+
+    def test_teacher_session_reports_anonymous_user(self):
+        self.client.logout()
+
+        response = self.client.get(reverse('teacher-session'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['is_authenticated'])
+
     def test_teacher_can_create_student_with_face_signature_and_books(self):
         book = Book.objects.create(title='Libro asignado', is_published=True)
 
