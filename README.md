@@ -29,6 +29,7 @@ DEBUG=False
 SECRET_KEY=<generada por Render>
 ALLOWED_HOSTS=<tu-servicio>.onrender.com
 CSRF_TRUSTED_ORIGINS=https://<tu-servicio>.onrender.com
+CORS_ALLOWED_ORIGINS=https://<tu-frontend-vercel>.vercel.app
 SERVE_MEDIA_FILES=True
 SECURE_SSL_REDIRECT=True
 ```
