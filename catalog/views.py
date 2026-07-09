@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
+from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -25,25 +26,33 @@ from .serializers import (
 )
 
 
+def teacher_auth_payload(request, user=None):
+    user = user or request.user
+    payload = {'csrf_token': get_token(request)}
+
+    if not user.is_authenticated:
+        payload['is_authenticated'] = False
+        return payload
+
+    payload.update({
+        'is_authenticated': True,
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'is_staff': user.is_staff,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+        },
+    })
+    return payload
+
+
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class TeacherSessionView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        user = request.user
-        if not user.is_authenticated:
-            return Response({'is_authenticated': False})
-
-        return Response({
-            'is_authenticated': True,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'is_staff': user.is_staff,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-            },
-        })
+        return Response(teacher_auth_payload(request))
 
 
 class TeacherLoginView(APIView):
@@ -68,16 +77,7 @@ class TeacherLoginView(APIView):
             )
 
         login(request, user)
-        return Response({
-            'is_authenticated': True,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'is_staff': user.is_staff,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-            },
-        })
+        return Response(teacher_auth_payload(request, user))
 
 
 class TeacherRegisterView(APIView):
@@ -97,16 +97,7 @@ class TeacherRegisterView(APIView):
         user = serializer.save()
         login(request, user)
         return Response(
-            {
-                'is_authenticated': True,
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'is_staff': user.is_staff,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                },
-            },
+            teacher_auth_payload(request, user),
             status=status.HTTP_201_CREATED,
         )
 
@@ -116,7 +107,7 @@ class TeacherLogoutView(APIView):
 
     def post(self, request):
         logout(request)
-        return Response({'is_authenticated': False})
+        return Response(teacher_auth_payload(request))
 
 
 class TeacherBookViewSet(ModelViewSet):

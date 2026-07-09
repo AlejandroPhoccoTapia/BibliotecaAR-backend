@@ -199,6 +199,7 @@ class TeacherApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['is_authenticated'])
         self.assertEqual(response.json()['user']['username'], 'docente')
+        self.assertTrue(response.json()['csrf_token'])
 
     def test_teacher_session_reports_anonymous_user(self):
         self.client.logout()
@@ -207,6 +208,7 @@ class TeacherApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()['is_authenticated'])
+        self.assertTrue(response.json()['csrf_token'])
 
     def test_first_teacher_can_register_without_existing_teacher(self):
         self.client.logout()
@@ -225,6 +227,7 @@ class TeacherApiTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(response.json()['is_authenticated'])
+        self.assertTrue(response.json()['csrf_token'])
         user = get_user_model().objects.get(username='primer-docente')
         self.assertTrue(user.is_staff)
 
