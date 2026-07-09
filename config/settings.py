@@ -160,6 +160,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
+SERVE_MEDIA_FILES = os.environ.get('SERVE_MEDIA_FILES', str(DEBUG)).lower() == 'true'
+USE_SUPABASE_STORAGE = os.environ.get('USE_SUPABASE_STORAGE', 'False').lower() == 'true'
+
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
@@ -169,9 +175,20 @@ STORAGES = {
     },
 }
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
-SERVE_MEDIA_FILES = os.environ.get('SERVE_MEDIA_FILES', str(DEBUG)).lower() == 'true'
+if USE_SUPABASE_STORAGE:
+    AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_STORAGE_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_STORAGE_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('SUPABASE_STORAGE_BUCKET_NAME', 'media')
+    AWS_S3_ENDPOINT_URL = os.environ.get('SUPABASE_STORAGE_ENDPOINT_URL')
+    AWS_S3_REGION_NAME = os.environ.get('SUPABASE_STORAGE_REGION_NAME', 'us-east-1')
+    AWS_S3_ADDRESSING_STYLE = 'path'
+    AWS_QUERYSTRING_AUTH = False
+    AWS_DEFAULT_ACL = None
+    SUPABASE_STORAGE_PUBLIC_URL = os.environ.get('SUPABASE_STORAGE_PUBLIC_URL', '')
+
+    STORAGES['default'] = {
+        'BACKEND': 'config.storage_backends.SupabaseMediaStorage',
+    }
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

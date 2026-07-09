@@ -32,6 +32,12 @@ CSRF_TRUSTED_ORIGINS=https://<tu-servicio>.onrender.com
 CORS_ALLOWED_ORIGINS=https://<tu-frontend-vercel>.vercel.app
 DATABASE_URL=<connection string de Supabase PostgreSQL>
 DB_SSL_REQUIRE=True
+USE_SUPABASE_STORAGE=True
+SUPABASE_STORAGE_BUCKET_NAME=media
+SUPABASE_STORAGE_ENDPOINT_URL=https://<project-ref>.supabase.co/storage/v1/s3
+SUPABASE_STORAGE_PUBLIC_URL=https://<project-ref>.supabase.co/storage/v1/object/public/media
+SUPABASE_STORAGE_ACCESS_KEY_ID=<access key de Supabase Storage S3>
+SUPABASE_STORAGE_SECRET_ACCESS_KEY=<secret key de Supabase Storage S3>
 SERVE_MEDIA_FILES=True
 SECURE_SSL_REDIRECT=True
 ```
@@ -39,6 +45,11 @@ SECURE_SSL_REDIRECT=True
 Para usar Supabase, copia la cadena de conexion PostgreSQL desde Project Settings > Database.
 En Render agregala como `DATABASE_URL`. Si Supabase entrega una URL con `postgresql://`,
 puedes pegarla directamente. Mantén `DB_SSL_REQUIRE=True` para conexiones seguras.
+
+Para usar Supabase Storage, crea un bucket publico llamado `media` y genera credenciales S3
+desde la configuracion de Storage. El endpoint S3 debe quedar como
+`https://<project-ref>.supabase.co/storage/v1/s3`; la URL publica del bucket debe quedar como
+`https://<project-ref>.supabase.co/storage/v1/object/public/media`.
 
 Si luego conectas un frontend en Vercel, agrega su dominio a `CSRF_TRUSTED_ORIGINS`.
 

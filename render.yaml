@@ -24,3 +24,15 @@ services:
         sync: false
       - key: DB_SSL_REQUIRE
         value: "True"
+      - key: USE_SUPABASE_STORAGE
+        value: "True"
+      - key: SUPABASE_STORAGE_BUCKET_NAME
+        value: media
+      - key: SUPABASE_STORAGE_ENDPOINT_URL
+        sync: false
+      - key: SUPABASE_STORAGE_PUBLIC_URL
+        sync: false
+      - key: SUPABASE_STORAGE_ACCESS_KEY_ID
+        sync: false
+      - key: SUPABASE_STORAGE_SECRET_ACCESS_KEY
+        sync: false
