@@ -15,6 +15,8 @@ from .models import StudentProfile, StudentSession
 
 
 ACCESS_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+ACCESS_CODE_LENGTH = 6
+LEGACY_ACCESS_CODE_LENGTH = 10
 SESSION_LIFETIME = timedelta(days=30)
 
 
@@ -33,7 +35,7 @@ def access_code_lookup(code):
 @transaction.atomic
 def reset_student_access_code(student):
     for _ in range(5):
-        code = ''.join(secrets.choice(ACCESS_ALPHABET) for _ in range(10))
+        code = ''.join(secrets.choice(ACCESS_ALPHABET) for _ in range(ACCESS_CODE_LENGTH))
         lookup = access_code_lookup(code)
         if not StudentProfile.objects.filter(access_code_lookup=lookup).exists():
             break
@@ -49,7 +51,7 @@ def reset_student_access_code(student):
 
 def authenticate_student_code(value):
     code = normalize_access_code(value)
-    if len(code) != 10 or any(character not in ACCESS_ALPHABET for character in code):
+    if len(code) not in (ACCESS_CODE_LENGTH, LEGACY_ACCESS_CODE_LENGTH) or any(character not in ACCESS_ALPHABET for character in code):
         return None
     student = StudentProfile.objects.filter(
         access_code_lookup=access_code_lookup(code), is_active=True,

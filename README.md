@@ -120,6 +120,8 @@ Colecciones: GET/POST. Detalles como `/api/teacher/books/1/`: GET/PUT/PATCH/DELE
 
 Al crear un estudiante, la respuesta incluye `access_code` una sola vez. El docente puede obtener un código nuevo con `POST /api/teacher/students/<id>/reset-access-code/`; invalida el anterior y todas sus sesiones. `has_access_code` indica si el perfil ya tiene código, sin revelar el secreto.
 
+Los códigos nuevos tienen **6 caracteres** de un alfabeto sin `0`, `1`, `I` ni `O`; se generan aleatoriamente y se comprueba su unicidad. Los códigos de 10 caracteres emitidos antes siguen siendo válidos hasta que el docente los restablezca. El acceso ignora mayúsculas, espacios y guiones. Como el código solo se muestra al crearlo o restablecerlo y se guarda con hash, los códigos existentes no se pueden acortar sin emitir uno nuevo; esa acción revoca el anterior y las sesiones abiertas.
+
 Endpoints de estudiante:
 
 | Método y ruta | Uso |

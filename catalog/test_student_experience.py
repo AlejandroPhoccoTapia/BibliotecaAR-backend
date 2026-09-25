@@ -30,6 +30,7 @@ class StudentExperienceTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.student_id = response.json()['id']
         self.code = response.json()['access_code']
+        self.assertEqual(len(self.code), 6)
         self.assertTrue(response.json()['has_access_code'])
         self.client.logout()
 
@@ -91,6 +92,7 @@ class StudentExperienceTests(TestCase):
         response = self.client.post(reverse('teacher-student-reset-access-code', kwargs={'pk': self.student_id}))
         self.assertEqual(response.status_code, 200)
         new_code = response.json()['access_code']
+        self.assertEqual(len(new_code), 6)
         self.assertNotEqual(new_code, self.code)
         self.client.logout()
 
@@ -100,6 +102,21 @@ class StudentExperienceTests(TestCase):
         )
         self.assertEqual(old_login.status_code, 403)
         self.assertTrue(self.login(new_code))
+
+    def test_old_ten_character_codes_remain_valid(self):
+        from .student_auth import access_code_lookup
+        from django.contrib.auth.hashers import make_password
+
+        old_code = 'ABCDEFGHJK'
+        StudentProfile.objects.filter(pk=self.student_id).update(
+            access_code_lookup=access_code_lookup(old_code),
+            access_code_hash=make_password(old_code),
+        )
+        self.assertTrue(self.login('abcd-efghjk'))
+        self.client.force_login(self.teacher)
+        shorter = self.client.post(reverse('teacher-student-reset-access-code', kwargs={'pk': self.student_id}))
+        self.assertEqual(shorter.status_code, 200)
+        self.assertEqual(len(shorter.json()['access_code']), 6)
 
     def test_anonymous_and_inactive_students_cannot_access_progress(self):
         self.assertEqual(self.client.get(reverse('student-library')).status_code, 401)
