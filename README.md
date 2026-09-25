@@ -38,9 +38,12 @@ catalog/
   face_recognition.py   Extracción LBP y comparación de imágenes
   admin.py              Administración Django y vistas previas
   migrations/           0001 catálogo; 0002 GLB; 0003 estudiantes
-  tests.py              15 pruebas de backend
+  signals.py            Limpieza de archivos después del commit de base de datos
+  validators.py         Límites de subida y validación de cabecera GLB
+  tests.py / test_*.py   40 pruebas de backend y regresiones
 config/
   settings.py           Entorno, base de datos, sesiones, CORS y almacenamiento
+  test_settings.py      SQLite en memoria, media temporal y caché aislada
   storage_backends.py   Construcción de URLs públicas Supabase
   urls.py               /admin/, /api/ y media de desarrollo
   wsgi.py / asgi.py      Entradas de servidor
@@ -59,7 +62,7 @@ render.yaml             Despliegue previsto en Render
 | Usuario Django | Es docente cuando `is_staff=True`; no hay modelo docente separado. |
 
 - `text` y `prefab_key` son obligatorios al crear escenas, incluso con GLB. La API admite título de escena vacío, aunque el panel exige título.
-- `order` organiza capítulos; no hay unicidad de orden dentro de un libro.
+- `order` organiza capítulos; la API exige al menos 1. No hay unicidad de orden dentro de un libro.
 - `Scene.save()` genera un código basado en el título del libro y un fragmento UUID si falta. Genera el PNG al crear el QR o cambiar su código. Renombrar un libro no cambia un código existente.
 - Eliminar un libro elimina sus escenas por cascada.
 - Todos los docentes autorizados comparten catálogo y estudiantes: no hay aislamiento por docente/institución.
@@ -94,7 +97,9 @@ Se usan sesiones Django con cookies. El panel envía `credentials: 'include'` y 
 | `POST /api/auth/register/` | Recibe `username`, `password` (mínimo 8), `first_name` y `last_name` opcionales. |
 | `POST /api/auth/logout/` | Requiere autenticación y cierra sesión. |
 
-Si no existe ningún staff, el registro admite al primer docente sin sesión. Después exige un docente autenticado. Actualmente el registro inicia sesión como el usuario recién creado, incluso si lo registra otro docente.
+Si no existe ningún staff, el registro admite al primer docente sin sesión e inicia su sesión. Después exige un docente autenticado y conserva su sesión al crear otra cuenta. La respuesta incluye `created_user` con el ID y nombre de usuario de la cuenta creada, además de los datos de la sesión actual. Se validan el formato del nombre de usuario y los validadores de contraseña de Django configurados en settings.
+
+Login y registro exigen CSRF también sin sesión: obtener primero el token con `GET /api/auth/me/` y enviar la cookie y `X-CSRFToken`. Login, registro e identificación facial tienen límites de solicitudes configurables. Usan la caché Django; la caché local por proceso no coordina varios workers. Para ese despliegue se necesita una caché compartida; estos límites no sustituyen protección contra abuso en el servidor de entrada.
 
 CRUD docente: `IsAdminUser`. Consulta Unity: pública, limitada por publicación. Identificación facial: pública, **no crea sesión ni emite token**. No hay un sistema JWT implementado.
 
@@ -106,16 +111,18 @@ CRUD docente: `IsAdminUser`. Consulta Unity: pública, limitada por publicación
 | `/api/teacher/scenes/` | `book` (ID), `title`, `order`, `text`, `prefab_key`, `audio`, `glb_model`. |
 | `/api/teacher/students/` | `full_name`, `classroom`, `photo`, `assigned_books` (IDs), `is_active`. |
 
-Colecciones: GET/POST. Detalles como `/api/teacher/books/1/`: GET/PUT/PATCH/DELETE. El panel edita con PATCH. Los listados devuelven arreglos sin paginación.
+Colecciones: GET/POST. Detalles como `/api/teacher/books/1/`: GET/PUT/PATCH/DELETE. El panel edita libros/escenas con PATCH y envía el perfil completo de estudiantes con PUT. Los listados devuelven arreglos sin paginación.
 
-Usar multipart para archivos y JSON para cambios sin archivos. En multipart, enviar asignaciones como valores repetidos `assigned_books=1`, `assigned_books=2`, no la cadena `"1,2"`. Para vaciar asignaciones en un cambio sin foto, usar JSON `{"assigned_books": []}`.
+Usar multipart para archivos y JSON para cambios sin archivos. En multipart, enviar asignaciones como valores repetidos `assigned_books=1`, `assigned_books=2`, no la cadena `"1,2"`. Para vaciar asignaciones en un cambio sin foto, usar JSON `{"assigned_books": []}`. En un PUT multipart completo, omitir `assigned_books` vacía la relación; en PATCH, omitirlo conserva las asignaciones. Las cadenas vacías permiten limpiar campos opcionales. Estas combinaciones tienen pruebas de regresión.
 
 Respuestas adicionales:
 - Libros: `cover_url`, `scenes_count`, fechas.
 - Escenas: `book_title`, `audio_url`, `glb_model_name`, `glb_model_url`, `qr_code`, `qr_image_url`, fechas. El QR es de solo lectura en esta API.
 - Estudiantes: `photo_url`, `assigned_books_detail`, `has_face_signature`, fechas; la firma no se expone mediante este serializer.
 
-PATCH de escena admite `{"remove_glb_model": true}`. El panel todavía no tiene un control dedicado para enviarlo. La sustitución de GLB intenta borrar el archivo anterior; la limpieza de otros archivos y de eliminaciones en cascada/masivas no está resuelta de manera general.
+PATCH de escena admite `{"remove_glb_model": true}` y el panel tiene un control para enviarlo. La API comprueba extensión `.glb`, cabecera GLB v2 y longitud declarada, además del tamaño máximo. No valida todos los chunks ni la compatibilidad del modelo con Unity. Audio admite `.mp3`, `.wav`, `.ogg`, `.m4a`, `.aac` y `.flac`; comprueba extensión y tamaño, sin decodificar el contenido. Las imágenes pasan por ImageField y un límite de tamaño. Estas validaciones pertenecen a los serializers de la API; no se aplican automáticamente a escrituras directas por ORM/admin.
+
+Portadas, audio, GLB, QR y fotos sustituidos o eliminados se borran del storage después de confirmar la transacción. Las señales cubren cascadas y `QuerySet.delete()` y conservan nombres todavía referenciados por otro campo de media gestionado. Un fallo del storage se registra sin deshacer una operación ya confirmada; no hay cola automática de reintentos. Los archivos nuevos subidos antes de un rollback pueden quedar huérfanos porque el storage no es transaccional. Tampoco se limpian huérfanos antiguos ni se interceptan `QuerySet.update()`/`bulk_update()`.
 
 ## 7. Contrato Unity
 
@@ -156,7 +163,7 @@ Proceso de `face_recognition.py`:
 
 `confidence = max(0, 1 - distance / threshold)` es un cálculo heurístico, no una probabilidad calibrada. OpenCV/NumPy no están en `requirements.txt`; la instalación base recurre al recorte central. No hay detección de vida ni evaluación de precisión con rostros reales en las pruebas.
 
-La firma se calcula en el serializer al subir foto por API. Crear perfiles directamente por ORM o admin no ejecuta ese serializer. Unity no consume este endpoint todavía. Los libros asignados se devuelven sin filtrar publicación y el endpoint Unity no exige identidad ni comprueba asignaciones. Identificación y autorización no están integradas.
+La firma se calcula en el serializer al subir foto por API y se borra al enviar `photo: null`. Crear perfiles directamente por ORM o admin no ejecuta ese serializer. La comparación rechaza firmas malformadas o no normalizadas, y la vista omite esos perfiles. Unity no consume este endpoint todavía. La respuesta de identificación incluye solo libros asignados publicados; el endpoint Unity no exige identidad ni comprueba asignaciones. Identificación y autorización no están integradas.
 
 ## 9. Entorno y despliegue previsto
 
@@ -181,6 +188,12 @@ Render sirve Django; Supabase PostgreSQL guarda datos y Supabase Storage compati
 | `SUPABASE_STORAGE_SECRET_ACCESS_KEY` | Secreto S3 del servidor. |
 | `SUPABASE_STORAGE_REGION_NAME` | Por defecto `us-east-1`. |
 | `SECURE_SSL_REDIRECT` | Redirección HTTPS con DEBUG=False; activada en render.yaml. |
+| `TEACHER_LOGIN_RATE` | Límite DRF de login; `20/minute`. |
+| `TEACHER_REGISTER_RATE` | Límite DRF de registro; `10/hour`. |
+| `STUDENT_FACE_RATE` | Límite DRF de identificación facial; `30/minute`. |
+| `MAX_IMAGE_UPLOAD_BYTES` | Imágenes: `10485760` (10 MiB). |
+| `MAX_AUDIO_UPLOAD_BYTES` | Audio: `52428800` (50 MiB). |
+| `MAX_GLB_UPLOAD_BYTES` | Modelos GLB: `104857600` (100 MiB). |
 
 Render ejecuta `bash build.sh` para instalar dependencias, recolectar estáticos y migrar, y `gunicorn config.wsgi:application` para servir. Configurar base, bucket y credenciales en el entorno; comprobar los dominios incluidos en `render.yaml`.
 
@@ -192,27 +205,26 @@ Si no se usa Supabase, configurar explícitamente persistencia y servicio de med
 
 ## 10. Validación
 
-Ejecutar en entorno local aislado, sin variables de base/storage de producción:
+Usar la configuración de pruebas: fuerza SQLite en memoria, archivos temporales y caché local. No usarla para servir la aplicación: también simplifica el hash de contraseñas para acelerar la suite.
 
 ```powershell
-.\.venv\Scripts\python manage.py check
-.\.venv\Scripts\python manage.py test catalog
-.\.venv\Scripts\python manage.py makemigrations --check --dry-run
+.\.venv\Scripts\python manage.py check --settings=config.test_settings
+.\.venv\Scripts\python manage.py test catalog --settings=config.test_settings
+.\.venv\Scripts\python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-Las 15 pruebas cubren QR, publicación, consulta Unity, libros/escenas, reemplazo/retirada GLB, permisos, sesiones, registro y estudiantes. Usan archivos sintéticos y dibujos; no validan biometría real, AR, GLB reales, cookies entre dominios ni Supabase. No se ejecutó la suite al redactar esta guía.
+Las **40 pruebas pasan** con Python 3.12.14. Cubren QR, publicación, consulta Unity, permisos, CSRF anónimo, sesiones, registro, límites de solicitudes, estudiantes, contratos multipart/PUT/PATCH, validación de subidas y limpieza de media con rollback, cascadas y referencias compartidas. `makemigrations --check --dry-run` no detecta cambios de esquema. Usan archivos sintéticos y dibujos; no validan biometría real, AR, modelos 3D reales, cookies entre dominios ni Supabase.
 
 Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo con recursos, comprobar JSON/URLs, configurar Unity, escanear en Android y verificar texto/audio/modelo. Despublicar el libro debe producir 404 en la API; el fallback local de Unity puede mostrar demostraciones para códigos conocidos. Probar estudiantes por separado hasta integrar su flujo móvil.
 
 ## 11. Problemas conocidos
 
-- El frontend agrega `assigned_books` como un único valor multipart: varios IDs pasan como `"1,2"`. Falta corregir y probar asignación múltiple y vaciado.
-- El frontend omite cadenas vacías; vaciar campos existentes puede no llegar al backend.
 - No hay autorización por estudiante, progreso lector, evaluaciones ni estadísticas de aprendizaje persistidas.
-- La validación de GLB/audio no inspecciona específicamente su formato interno; una subida aceptada puede fallar en Unity.
-- Limpieza de archivos parcial; revisar cascadas y borrado masivo antes de asumir que no quedan huérfanos.
+- La validación de cabecera GLB no garantiza un modelo utilizable y el audio no se decodifica; una subida aceptada puede fallar en Unity.
+- El storage no es transaccional: quedan pendientes reconciliación de huérfanos y reintentos de borrados fallidos.
 - Sin paginación, aislamiento por docente ni indexación biométrica: se comparan todos los perfiles activos con firma.
-- El serializer de registro exige longitud y usuario único, pero no llama explícitamente a los validadores de contraseña declarados en settings.
+- El alta pública inicial no serializa registros concurrentes del primer docente.
+- Las fotos usan URLs públicas y los límites de solicitudes requieren caché compartida para coordinar varios workers.
 
 ## 12. Guía para el siguiente asistente
 
@@ -223,3 +235,4 @@ Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo
 5. No presentar la identificación facial como autenticación completa ni asumir que las asignaciones restringen QR.
 6. No ejecutar pruebas/migraciones contra producción por defecto ni versionar secretos, fotos reales, bases locales o archivos de entorno.
 7. Documentar las verificaciones realizadas y actualizar limitaciones cuando se resuelvan.
+8. Crear commits separados por mejoras significativas y verificadas, como pidió el propietario, para facilitar revisión y retroceso.
