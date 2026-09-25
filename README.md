@@ -57,13 +57,13 @@ render.yaml             Despliegue previsto en Render
 | Entidad | Datos y relaciones |
 | --- | --- |
 | `Book` | `title`, `description`, `cover`, `is_published`, fechas; tiene muchas escenas. |
-| `Scene` | `book`, `title`, `order`, `text`, `audio`, `glb_model`, `prefab_key`, `qr_code`, `qr_image`, fechas. |
+| `Scene` | `book`, `title`, `order`, `text`, `audio`, `glb_model`, `prefab_key`, `qr_code`, `qr_image`, seis ajustes físicos AR y fechas. |
 | `StudentProfile` | `full_name`, `classroom`, `photo`, `face_signature` JSON, `assigned_books` muchos-a-muchos, código de acceso protegido, `is_active`, fechas. |
 | `StudentSession` | Token opaco guardado como hash, estudiante y vencimiento a 30 días. |
 | `StudentReadingProgress` | Un registro por estudiante/capítulo con última apertura y fecha de finalización. |
 | Usuario Django | Es docente cuando `is_staff=True`; no hay modelo docente separado. |
 
-- `text` y `prefab_key` son obligatorios al crear escenas, incluso con GLB. La API admite título de escena vacío, aunque el panel exige título.
+- `text` es obligatorio al crear escenas. `prefab_key` puede quedar vacío si se sube un GLB; para ver un modelo debe existir al menos un recurso 3D. La API admite título de escena vacío, aunque el panel exige título.
 - `order` organiza capítulos; la API exige al menos 1. No hay unicidad de orden dentro de un libro.
 - `Scene.save()` genera un código basado en el título del libro y un fragmento UUID si falta. Genera el PNG al crear el QR o cambiar su código. Renombrar un libro no cambia un código existente.
 - Eliminar un libro elimina sus escenas por cascada.
@@ -98,6 +98,7 @@ Se usan sesiones Django con cookies. El panel envía `credentials: 'include'` y 
 | `POST /api/auth/login/` | Recibe `username` y `password`; exige usuario staff válido. |
 | `POST /api/auth/register/` | Recibe `username`, `password` (mínimo 8), `first_name` y `last_name` opcionales. |
 | `POST /api/auth/logout/` | Requiere autenticación y cierra sesión. |
+| `POST /api/auth/mobile-login/` | Usuario y contraseña docente; devuelve token temporal para vista previa AR móvil. |
 
 El registro está abierto: cualquier persona puede crear una cuenta docente en cualquier momento. Al registrarse sin sesión, inicia sesión automáticamente; si ya había una sesión docente, se conserva. La respuesta incluye `created_user` con el ID y nombre de usuario de la cuenta creada, además de los datos de la sesión actual. Se validan el formato del nombre de usuario y los validadores de contraseña de Django configurados en settings.
 
@@ -105,12 +106,14 @@ Login y registro docente exigen CSRF también sin sesión: obtener primero el to
 
 CRUD docente: `IsAdminUser`. Consulta Unity heredada: pública, limitada por publicación. Los accesos de estudiante por rostro o código emiten un token opaco para sus endpoints protegidos; no es JWT. El cliente lo envía como `Authorization: Bearer <token>`. El backend almacena únicamente su hash, comprueba expiración y actividad del perfil, y lo revoca al cambiar el código o desactivar el estudiante.
 
+La vista previa docente usa `Authorization: TeacherPreview <token>` con `GET/PATCH /api/teacher/mobile/scenes/<qr_code>/`. El token firmado vence a los 30 minutos y deja de servir si cambia la contraseña o el usuario pierde permiso `is_staff`. Permite consultar borradores y solo modificar los seis campos físicos AR de ese capítulo; no publica libros ni cambia texto o archivos. La app Unity mantiene el token solo en memoria. El acceso móvil tiene límite de solicitudes, pero en despliegues con varios workers se requiere una caché compartida para coordinar ese límite.
+
 ## 6. CRUD y archivos
 
 | Colección | Campos de entrada |
 | --- | --- |
 | `/api/teacher/books/` | `title`, `description`, `is_published`, `cover`. |
-| `/api/teacher/scenes/` | `book` (ID), `title`, `order`, `text`, `prefab_key`, `audio`, `glb_model`. |
+| `/api/teacher/scenes/` | `book` (ID), `title`, `order`, `text`, `prefab_key`, `audio`, `glb_model` y ajustes AR por capítulo. |
 | `/api/teacher/students/` | `full_name`, `classroom`, `photo`, `assigned_books` (IDs), `is_active`. |
 
 Colecciones: GET/POST. Detalles como `/api/teacher/books/1/`: GET/PUT/PATCH/DELETE. El panel edita libros/escenas con PATCH y envía el perfil completo de estudiantes con PUT. Los listados devuelven arreglos sin paginación.
@@ -142,6 +145,8 @@ Respuestas adicionales:
 
 PATCH de escena admite `{"remove_glb_model": true}` y el panel tiene un control para enviarlo. La API comprueba extensión `.glb`, cabecera GLB v2 y longitud declarada, además del tamaño máximo. No valida todos los chunks ni la compatibilidad del modelo con Unity. Audio admite `.mp3`, `.wav`, `.ogg`, `.m4a`, `.aac` y `.flac`; comprueba extensión y tamaño, sin decodificar el contenido. Las imágenes pasan por ImageField y un límite de tamaño. Estas validaciones pertenecen a los serializers de la API; no se aplican automáticamente a escrituras directas por ORM/admin.
 
+Los ajustes AR son `ar_marker_width_cm` (2–30; ancho físico del QR impreso), `ar_model_size_cm` (1–50; mayor dimensión del modelo), `ar_offset_x_cm`, `ar_offset_y_cm`, `ar_offset_z_cm` (cada uno −50 a 50) y `ar_yaw_degrees` (−180 a 180). Por defecto valen 6, 8, 0, 0.5, 0 y 0. Cambiar el ancho del marcador no escala el modelo: Unity normaliza el GLB/prefab a `ar_model_size_cm` de forma independiente. El docente puede corregir estos valores en el panel y probarlos directamente con el teléfono sobre la página.
+
 Portadas, audio, GLB, QR y fotos sustituidos o eliminados se borran del storage después de confirmar la transacción. Las señales cubren cascadas y `QuerySet.delete()` y conservan nombres todavía referenciados por otro campo de media gestionado. Un fallo del storage se registra sin deshacer una operación ya confirmada; no hay cola automática de reintentos. Los archivos nuevos subidos antes de un rollback pueden quedar huérfanos porque el storage no es transaccional. Tampoco se limpian huérfanos antiguos ni se interceptan `QuerySet.update()`/`bulk_update()`.
 
 ## 7. Contrato Unity
@@ -163,7 +168,13 @@ GET /api/unity/scenes/<qr_code>/
   "cover_url": null,
   "audio_url": "https://media.example/scenes/audio/hormiga.mp3",
   "glb_model_url": "https://media.example/scenes/models/hormiga.glb",
-  "qr_image_url": "https://media.example/scenes/qr/libro-demo-scene-a1b2c3d4e5.png"
+  "qr_image_url": "https://media.example/scenes/qr/libro-demo-scene-a1b2c3d4e5.png",
+  "ar_marker_width_cm": 6,
+  "ar_model_size_cm": 8,
+  "ar_offset_x_cm": 0,
+  "ar_offset_y_cm": 0.5,
+  "ar_offset_z_cm": 0,
+  "ar_yaw_degrees": 0
 }
 ```
 
@@ -234,7 +245,7 @@ Usar la configuración de pruebas: fuerza SQLite en memoria, archivos temporales
 .\.venv\Scripts\python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-Las **40 pruebas pasan** con Python 3.12.14. Cubren QR, publicación, consulta Unity, permisos, CSRF anónimo, sesiones, registro, límites de solicitudes, estudiantes, contratos multipart/PUT/PATCH, validación de subidas y limpieza de media con rollback, cascadas y referencias compartidas. `makemigrations --check --dry-run` no detecta cambios de esquema. Usan archivos sintéticos y dibujos; no validan biometría real, AR, modelos 3D reales, cookies entre dominios ni Supabase.
+Las **47 pruebas pasan** con Python 3.12.14. Cubren QR, publicación, consulta Unity, permisos, CSRF anónimo, sesiones, registro, límites de solicitudes, estudiantes, contratos multipart/PUT/PATCH, ajustes AR y autenticación docente móvil, validación de subidas y limpieza de media con rollback, cascadas y referencias compartidas. `makemigrations --check --dry-run` no detecta cambios de esquema. Usan archivos sintéticos y dibujos; no validan biometría real, AR, modelos 3D reales, cookies entre dominios ni Supabase.
 
 Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo con recursos, comprobar JSON/URLs, configurar Unity, escanear en Android y verificar texto/audio/modelo. Despublicar el libro debe producir 404 en la API; el fallback local de Unity puede mostrar demostraciones para códigos conocidos. Probar estudiantes por separado hasta integrar su flujo móvil.
 
