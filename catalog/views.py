@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_protect
@@ -22,6 +23,7 @@ from rest_framework.generics import RetrieveAPIView
 
 from .face_recognition import FaceRecognitionError, build_face_signature, compare_signatures
 from .models import Book, Scene, StudentProfile, StudentReadingProgress
+from .qr_pdf import build_scene_qr_pdf
 from .serializers import (
     StudentAssignedBookSerializer,
     StudentChapterSerializer,
@@ -183,6 +185,17 @@ class TeacherSceneViewSet(ModelViewSet):
 
     def get_queryset(self):
         return Scene.objects.select_related('book').order_by('book__title', 'order', 'id')
+
+    @action(detail=True, methods=['get'], url_path='printable-qr')
+    def printable_qr(self, request, pk=None):
+        scene = self.get_object()
+        try:
+            content = build_scene_qr_pdf(scene)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        response = HttpResponse(content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{scene.qr_code}-qr.pdf"'
+        return response
 
 
 class TeacherStudentViewSet(ModelViewSet):

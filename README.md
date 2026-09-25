@@ -27,20 +27,21 @@ El docente crea un libro, añade capítulos con recursos, publica el libro y obt
 
 ## 2. Tecnologías y estructura
 
-Versiones fijadas en [requirements.txt](requirements.txt): Django 6.0.7, Django REST Framework 3.17.1, Pillow, qrcode, dj-database-url, psycopg, django-storages/boto3, django-cors-headers, WhiteNoise y Gunicorn.
+Versiones fijadas en [requirements.txt](requirements.txt): Django 6.0.7, Django REST Framework 3.17.1, Pillow, qrcode, ReportLab, dj-database-url, psycopg, django-storages/boto3, django-cors-headers, WhiteNoise y Gunicorn.
 
 ```text
 catalog/
   models.py             Book, Scene, StudentProfile; generación de QR
   serializers.py        Contratos y generación de firma facial al recibir foto
   views.py              Autenticación, CRUD, identificación y consulta Unity
+  qr_pdf.py             Hoja PDF imprimible con QR vectorial a escala física
   urls.py               Router y endpoints
   face_recognition.py   Extracción LBP y comparación de imágenes
   admin.py              Administración Django y vistas previas
   migrations/           0001 catálogo; 0002 GLB; 0003 estudiantes
   signals.py            Limpieza de archivos después del commit de base de datos
   validators.py         Límites de subida y validación de cabecera GLB
-  tests.py / test_*.py   44 pruebas de backend y regresiones
+  tests.py / test_*.py   51 pruebas de backend y regresiones
 config/
   settings.py           Entorno, base de datos, sesiones, CORS y almacenamiento
   test_settings.py      SQLite en memoria, media temporal y caché aislada
@@ -117,6 +118,8 @@ La vista previa docente usa `Authorization: TeacherPreview <token>` con `GET/PAT
 | `/api/teacher/students/` | `full_name`, `classroom`, `photo`, `assigned_books` (IDs), `is_active`. |
 
 Colecciones: GET/POST. Detalles como `/api/teacher/books/1/`: GET/PUT/PATCH/DELETE. El panel edita libros/escenas con PATCH y envía el perfil completo de estudiantes con PUT. Los listados devuelven arreglos sin paginación.
+
+`GET /api/teacher/scenes/<id>/printable-qr/` requiere sesión docente y descarga un PDF de una página. El QR se dibuja como vector con su zona blanca incluida a exactamente `ar_marker_width_cm` de ancho y alto. Se usa A4 hasta 17 cm, A3 hasta 25 cm y A2 hasta 30 cm; así no se recorta el QR grande. La hoja muestra libro, capítulo, medida, una línea de comprobación de 5 cm e instrucciones para imprimir al **100 % / tamaño real**, sin «ajustar a página». Si el docente cambia el ancho y vuelve a descargar, se aplica la medida guardada actual. El PDF se genera desde `qr_code`, sin depender de la URL del PNG almacenado.
 
 Al crear un estudiante, la respuesta incluye `access_code` una sola vez. El docente puede obtener un código nuevo con `POST /api/teacher/students/<id>/reset-access-code/`; invalida el anterior y todas sus sesiones. `has_access_code` indica si el perfil ya tiene código, sin revelar el secreto.
 
@@ -249,7 +252,7 @@ Usar la configuración de pruebas: fuerza SQLite en memoria, archivos temporales
 .\.venv\Scripts\python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-Las **47 pruebas pasan** con Python 3.12.14. Cubren QR, publicación, consulta Unity, permisos, CSRF anónimo, sesiones, registro, límites de solicitudes, estudiantes, contratos multipart/PUT/PATCH, ajustes AR y autenticación docente móvil, validación de subidas y limpieza de media con rollback, cascadas y referencias compartidas. `makemigrations --check --dry-run` no detecta cambios de esquema. Usan archivos sintéticos y dibujos; no validan biometría real, AR, modelos 3D reales, cookies entre dominios ni Supabase.
+Las **51 pruebas pasan** con Python 3.12.14. Cubren QR, PDF imprimible y medida física, publicación, consulta Unity, permisos, CSRF anónimo, sesiones, registro, límites de solicitudes, estudiantes, contratos multipart/PUT/PATCH, ajustes AR y autenticación docente móvil, validación de subidas y limpieza de media con rollback, cascadas y referencias compartidas. `makemigrations --check --dry-run` no detecta cambios de esquema. Usan archivos sintéticos y dibujos; no validan biometría real, AR, modelos 3D reales, cookies entre dominios ni Supabase.
 
 Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo con recursos, comprobar JSON/URLs, configurar Unity, escanear en Android y verificar texto/audio/modelo. Despublicar el libro debe producir 404 en la API; el fallback local de Unity puede mostrar demostraciones para códigos conocidos. Probar estudiantes por separado hasta integrar su flujo móvil.
 

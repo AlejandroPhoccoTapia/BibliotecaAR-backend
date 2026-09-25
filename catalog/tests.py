@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+import re
 from io import BytesIO
 import struct
 from pathlib import Path
@@ -9,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image, ImageDraw
+from reportlab.lib.units import cm
 
 from .models import Book, Scene, StudentProfile
 
@@ -126,6 +128,32 @@ class TeacherApiTests(TestCase):
         self.assertTrue(response.json()['qr_image_url'])
         self.assertEqual(response.json()['glb_model_name'], 'bosque.glb')
         self.assertTrue(response.json()['glb_model_url'].endswith('/media/scenes/models/bosque.glb'))
+
+    def test_teacher_can_download_qr_pdf_at_saved_physical_width(self):
+        book = Book.objects.create(title='Libro Demo', is_published=True)
+        scene = Scene.objects.create(book=book, title='Escena 1', text='Historia', ar_marker_width_cm=6.5)
+
+        response = self.client.get(reverse('teacher-scene-printable-qr', kwargs={'pk': scene.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment;', response['Content-Disposition'])
+        self.assertTrue(response.content.startswith(b'%PDF-'))
+        qr_backgrounds = re.findall(
+            rb'([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+) re',
+            response.content,
+        )
+        self.assertTrue(qr_backgrounds)
+        self.assertAlmostEqual(float(qr_backgrounds[0][2]), 6.5 * cm, places=3)
+        self.assertAlmostEqual(float(qr_backgrounds[0][3]), 6.5 * cm, places=3)
+
+    def test_qr_pdf_requires_teacher_session(self):
+        scene = Scene.objects.create(book=Book.objects.create(title='Libro'), text='Historia')
+        self.client.logout()
+
+        response = self.client.get(reverse('teacher-scene-printable-qr', kwargs={'pk': scene.pk}))
+
+        self.assertIn(response.status_code, (401, 403))
 
     def test_replacing_glb_model_deletes_old_file(self):
         book = Book.objects.create(title='Libro Demo', is_published=True)
