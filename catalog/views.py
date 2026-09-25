@@ -318,23 +318,33 @@ class StudentBookDetailView(StudentAuthenticatedView):
 
 class StudentChapterProgressView(StudentAuthenticatedView):
     def post(self, request, pk, action):
-        if action not in ('open', 'complete'):
-            return Response({'detail': 'Acción desconocida.'}, status=status.HTTP_400_BAD_REQUEST)
         chapter = get_object_or_404(Scene.objects.filter(book__is_published=True), pk=pk)
-        now = timezone.now()
-        progress, _ = StudentReadingProgress.objects.get_or_create(student=request.user, scene=chapter)
-        progress.last_opened_at = now
-        fields = ['last_opened_at']
-        if action == 'complete':
-            progress.completed_at = now
-            fields.append('completed_at')
-        progress.save(update_fields=fields)
-        return Response({
-            'scene_id': chapter.id,
-            'last_opened_at': progress.last_opened_at,
-            'completed_at': progress.completed_at,
-            'is_completed': bool(progress.completed_at),
-        })
+        return save_student_progress(request.user, chapter, action)
+
+
+class StudentQRProgressView(StudentAuthenticatedView):
+    def post(self, request, qr_code, action):
+        chapter = get_object_or_404(Scene.objects.filter(book__is_published=True), qr_code=qr_code)
+        return save_student_progress(request.user, chapter, action)
+
+
+def save_student_progress(student, chapter, action):
+    if action not in ('open', 'complete'):
+        return Response({'detail': 'Acción desconocida.'}, status=status.HTTP_400_BAD_REQUEST)
+    now = timezone.now()
+    progress, _ = StudentReadingProgress.objects.get_or_create(student=student, scene=chapter)
+    progress.last_opened_at = now
+    fields = ['last_opened_at']
+    if action == 'complete':
+        progress.completed_at = now
+        fields.append('completed_at')
+    progress.save(update_fields=fields)
+    return Response({
+        'scene_id': chapter.id,
+        'last_opened_at': progress.last_opened_at,
+        'completed_at': progress.completed_at,
+        'is_completed': bool(progress.completed_at),
+    })
 
 
 class UnitySceneDetailView(RetrieveAPIView):

@@ -8,6 +8,7 @@ from .views import (
     StudentFaceLoginView,
     StudentLibraryView,
     StudentLogoutView,
+    StudentQRProgressView,
     StudentSessionView,
     TeacherLoginView,
     TeacherLogoutView,
@@ -39,5 +40,6 @@ urlpatterns = [
     path('student/library/', StudentLibraryView.as_view(), name='student-library'),
     path('student/books/<int:pk>/', StudentBookDetailView.as_view(), name='student-book-detail'),
     path('student/chapters/<int:pk>/<str:action>/', StudentChapterProgressView.as_view(), name='student-chapter-progress'),
+    path('student/qr/<str:qr_code>/<str:action>/', StudentQRProgressView.as_view(), name='student-qr-progress'),
     path('unity/scenes/<str:qr_code>/', UnitySceneDetailView.as_view(), name='unity-scene-detail'),
 ]

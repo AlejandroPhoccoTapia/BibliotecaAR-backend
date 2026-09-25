@@ -40,7 +40,7 @@ catalog/
   migrations/           0001 catálogo; 0002 GLB; 0003 estudiantes
   signals.py            Limpieza de archivos después del commit de base de datos
   validators.py         Límites de subida y validación de cabecera GLB
-  tests.py / test_*.py   40 pruebas de backend y regresiones
+  tests.py / test_*.py   44 pruebas de backend y regresiones
 config/
   settings.py           Entorno, base de datos, sesiones, CORS y almacenamiento
   test_settings.py      SQLite en memoria, media temporal y caché aislada
@@ -129,6 +129,7 @@ Endpoints de estudiante:
 | `GET /api/student/books/<id>/` | Texto, audio y estado de los capítulos de un libro publicado; no entrega el modelo AR. |
 | `POST /api/student/chapters/<id>/open/` | Registra la última apertura del capítulo. |
 | `POST /api/student/chapters/<id>/complete/` | Marca el capítulo como leído explícitamente. |
+| `POST /api/student/qr/<qr_code>/open/` y `/complete/` | Las mismas acciones desde la experiencia AR, usando el QR escaneado. |
 
 Excepto los dos accesos, estas rutas requieren Bearer. Un libro publicado no asignado también se puede consultar y aparece en «recientes» después de abrir un capítulo. Los borradores no se exponen. El avance persiste en PostgreSQL/SQLite y se recupera en otro dispositivo tras entrar con el mismo estudiante.
 

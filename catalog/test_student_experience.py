@@ -81,7 +81,7 @@ class StudentExperienceTests(TestCase):
             self.auth_post('student-chapter-progress', token, pk=self.draft_chapter.id, action='open').status_code,
             404,
         )
-        self.auth_post('student-chapter-progress', token, pk=self.other_chapter.id, action='open')
+        self.auth_post('student-qr-progress', token, qr_code=self.other_chapter.qr_code, action='open')
         library = self.auth_get('student-library', token).json()
         self.assertEqual([book['title'] for book in library['recent_books']], ['Explorado'])
 
