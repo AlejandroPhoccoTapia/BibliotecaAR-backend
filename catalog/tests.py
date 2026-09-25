@@ -145,7 +145,8 @@ class TeacherApiTests(TestCase):
             b'new glb content',
             content_type='model/gltf-binary',
         )
-        scene.save()
+        with self.captureOnCommitCallbacks(execute=True):
+            scene.save()
 
         self.assertFalse(old_path.exists())
         self.assertTrue(Path(scene.glb_model.path).exists())
@@ -164,11 +165,12 @@ class TeacherApiTests(TestCase):
         )
         old_path = Path(scene.glb_model.path)
 
-        response = self.client.patch(
-            reverse('teacher-scene-detail', kwargs={'pk': scene.pk}),
-            {'remove_glb_model': True},
-            content_type='application/json',
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                reverse('teacher-scene-detail', kwargs={'pk': scene.pk}),
+                {'remove_glb_model': True},
+                content_type='application/json',
+            )
 
         scene.refresh_from_db()
         self.assertEqual(response.status_code, 200)

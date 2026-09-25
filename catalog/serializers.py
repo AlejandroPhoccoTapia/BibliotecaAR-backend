@@ -101,8 +101,7 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
         remove_glb_model = validated_data.pop('remove_glb_model', False)
 
         if remove_glb_model and 'glb_model' not in validated_data:
-            instance.glb_model.delete(save=False)
-            instance.glb_model = None
+            validated_data['glb_model'] = None
 
         return super().update(instance, validated_data)
 
