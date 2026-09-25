@@ -58,7 +58,9 @@ render.yaml             Despliegue previsto en Render
 | --- | --- |
 | `Book` | `title`, `description`, `cover`, `is_published`, fechas; tiene muchas escenas. |
 | `Scene` | `book`, `title`, `order`, `text`, `audio`, `glb_model`, `prefab_key`, `qr_code`, `qr_image`, fechas. |
-| `StudentProfile` | `full_name`, `classroom`, `photo`, `face_signature` JSON, `assigned_books` muchos-a-muchos, `is_active`, fechas. |
+| `StudentProfile` | `full_name`, `classroom`, `photo`, `face_signature` JSON, `assigned_books` muchos-a-muchos, código de acceso protegido, `is_active`, fechas. |
+| `StudentSession` | Token opaco guardado como hash, estudiante y vencimiento a 30 días. |
+| `StudentReadingProgress` | Un registro por estudiante/capítulo con última apertura y fecha de finalización. |
 | Usuario Django | Es docente cuando `is_staff=True`; no hay modelo docente separado. |
 
 - `text` y `prefab_key` son obligatorios al crear escenas, incluso con GLB. La API admite título de escena vacío, aunque el panel exige título.
@@ -99,9 +101,9 @@ Se usan sesiones Django con cookies. El panel envía `credentials: 'include'` y 
 
 El registro está abierto: cualquier persona puede crear una cuenta docente en cualquier momento. Al registrarse sin sesión, inicia sesión automáticamente; si ya había una sesión docente, se conserva. La respuesta incluye `created_user` con el ID y nombre de usuario de la cuenta creada, además de los datos de la sesión actual. Se validan el formato del nombre de usuario y los validadores de contraseña de Django configurados en settings.
 
-Login y registro exigen CSRF también sin sesión: obtener primero el token con `GET /api/auth/me/` y enviar la cookie y `X-CSRFToken`. Login, registro e identificación facial tienen límites de solicitudes configurables. Usan la caché Django; la caché local por proceso no coordina varios workers. Para ese despliegue se necesita una caché compartida; estos límites no sustituyen protección contra abuso en el servidor de entrada.
+Login y registro docente exigen CSRF también sin sesión: obtener primero el token con `GET /api/auth/me/` y enviar la cookie y `X-CSRFToken`. Los accesos docente, facial y por código tienen límites de solicitudes configurables. Usan la caché Django; la caché local por proceso no coordina varios workers. Para ese despliegue se necesita una caché compartida; estos límites no sustituyen protección contra abuso en el servidor de entrada.
 
-CRUD docente: `IsAdminUser`. Consulta Unity: pública, limitada por publicación. Identificación facial: pública, **no crea sesión ni emite token**. No hay un sistema JWT implementado.
+CRUD docente: `IsAdminUser`. Consulta Unity heredada: pública, limitada por publicación. Los accesos de estudiante por rostro o código emiten un token opaco para sus endpoints protegidos; no es JWT. El cliente lo envía como `Authorization: Bearer <token>`. El backend almacena únicamente su hash, comprueba expiración y actividad del perfil, y lo revoca al cambiar el código o desactivar el estudiante.
 
 ## 6. CRUD y archivos
 
@@ -112,6 +114,23 @@ CRUD docente: `IsAdminUser`. Consulta Unity: pública, limitada por publicación
 | `/api/teacher/students/` | `full_name`, `classroom`, `photo`, `assigned_books` (IDs), `is_active`. |
 
 Colecciones: GET/POST. Detalles como `/api/teacher/books/1/`: GET/PUT/PATCH/DELETE. El panel edita libros/escenas con PATCH y envía el perfil completo de estudiantes con PUT. Los listados devuelven arreglos sin paginación.
+
+Al crear un estudiante, la respuesta incluye `access_code` una sola vez. El docente puede obtener un código nuevo con `POST /api/teacher/students/<id>/reset-access-code/`; invalida el anterior y todas sus sesiones. `has_access_code` indica si el perfil ya tiene código, sin revelar el secreto.
+
+Endpoints de estudiante:
+
+| Método y ruta | Uso |
+| --- | --- |
+| `POST /api/student/code-login/` | Recibe `{"code":"..."}` y devuelve `student`, `token`, `expires_at`. |
+| `POST /api/student/face-login/` | Recibe imagen multipart y devuelve esos campos más `distance` y `confidence`. |
+| `GET /api/student/me/` | Valida la sesión y devuelve el perfil. |
+| `POST /api/student/logout/` | Revoca el token actual. |
+| `GET /api/student/library/` | Libros asignados publicados, libros publicados explorados y último capítulo abierto. |
+| `GET /api/student/books/<id>/` | Texto, audio y estado de los capítulos de un libro publicado; no entrega el modelo AR. |
+| `POST /api/student/chapters/<id>/open/` | Registra la última apertura del capítulo. |
+| `POST /api/student/chapters/<id>/complete/` | Marca el capítulo como leído explícitamente. |
+
+Excepto los dos accesos, estas rutas requieren Bearer. Un libro publicado no asignado también se puede consultar y aparece en «recientes» después de abrir un capítulo. Los borradores no se exponen. El avance persiste en PostgreSQL/SQLite y se recupera en otro dispositivo tras entrar con el mismo estudiante.
 
 Usar multipart para archivos y JSON para cambios sin archivos. En multipart, enviar asignaciones como valores repetidos `assigned_books=1`, `assigned_books=2`, no la cadena `"1,2"`. Para vaciar asignaciones en un cambio sin foto, usar JSON `{"assigned_books": []}`. En un PUT multipart completo, omitir `assigned_books` vacía la relación; en PATCH, omitirlo conserva las asignaciones. Las cadenas vacías permiten limpiar campos opcionales. Estas combinaciones tienen pruebas de regresión.
 
@@ -151,7 +170,7 @@ Archivos ausentes: `null`. Unity espera estos nombres en `UnitySceneApiResponse`
 
 ## 8. Identificación facial: alcance real
 
-`POST /api/student/face-login/` recibe multipart con `image`. Devuelve `student` (ID, nombre, aula, foto y libros asignados), `distance` y `confidence`; 400 para entrada inválida y 404 si no hay coincidencia aceptada.
+`POST /api/student/face-login/` recibe multipart con `image`. Devuelve `student` (ID, nombre, aula, foto y libros asignados), `distance`, `confidence` y un token de sesión; 400 para entrada inválida y 404 si no hay coincidencia aceptada.
 
 Proceso de `face_recognition.py`:
 1. Leer imagen con Pillow.
@@ -163,7 +182,7 @@ Proceso de `face_recognition.py`:
 
 `confidence = max(0, 1 - distance / threshold)` es un cálculo heurístico, no una probabilidad calibrada. OpenCV/NumPy no están en `requirements.txt`; la instalación base recurre al recorte central. No hay detección de vida ni evaluación de precisión con rostros reales en las pruebas.
 
-La firma se calcula en el serializer al subir foto por API y se borra al enviar `photo: null`. Crear perfiles directamente por ORM o admin no ejecuta ese serializer. La comparación rechaza firmas malformadas o no normalizadas, y la vista omite esos perfiles. Unity no consume este endpoint todavía. La respuesta de identificación incluye solo libros asignados publicados; el endpoint Unity no exige identidad ni comprueba asignaciones. Identificación y autorización no están integradas.
+La firma se calcula en el serializer al subir foto por API y se borra al enviar `photo: null`. Crear perfiles directamente por ORM o admin no ejecuta ese serializer. La comparación rechaza firmas malformadas o no normalizadas, y la vista omite esos perfiles. La respuesta de identificación incluye solo libros asignados publicados. El token identifica al perfil para biblioteca y progreso, pero la comparación facial sigue siendo experimental y no prueba presencia real. El endpoint Unity heredado sigue siendo público y no comprueba asignaciones.
 
 ## 9. Entorno y despliegue previsto
 
@@ -191,6 +210,7 @@ Render sirve Django; Supabase PostgreSQL guarda datos y Supabase Storage compati
 | `TEACHER_LOGIN_RATE` | Límite DRF de login; `20/minute`. |
 | `TEACHER_REGISTER_RATE` | Límite DRF de registro; `10/hour`. |
 | `STUDENT_FACE_RATE` | Límite DRF de identificación facial; `30/minute`. |
+| `STUDENT_CODE_RATE` | Límite DRF de acceso por código; `10/minute`. |
 | `MAX_IMAGE_UPLOAD_BYTES` | Imágenes: `10485760` (10 MiB). |
 | `MAX_AUDIO_UPLOAD_BYTES` | Audio: `52428800` (50 MiB). |
 | `MAX_GLB_UPLOAD_BYTES` | Modelos GLB: `104857600` (100 MiB). |
@@ -219,7 +239,8 @@ Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo
 
 ## 11. Problemas conocidos
 
-- No hay autorización por estudiante, progreso lector, evaluaciones ni estadísticas de aprendizaje persistidas.
+- La API Unity heredada sigue siendo pública para compatibilidad. Las asignaciones personalizan «Mis libros», pero no restringen otros libros publicados.
+- No hay evaluaciones ni estadísticas pedagógicas; el progreso registra aperturas y capítulos marcados como terminados.
 - La validación de cabecera GLB no garantiza un modelo utilizable y el audio no se decodifica; una subida aceptada puede fallar en Unity.
 - El storage no es transaccional: quedan pendientes reconciliación de huérfanos y reintentos de borrados fallidos.
 - Sin paginación, aislamiento por docente ni indexación biométrica: se comparan todos los perfiles activos con firma.
@@ -232,7 +253,7 @@ Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo
 2. Revisar `git status` en cada repositorio independiente y conservar cambios ajenos.
 3. Empezar por modelos, serializers y vistas. Para integración comparar `catalog/urls.py`, `src/api.js` del panel y `ARSceneController.cs` de Unity.
 4. Mantener nombres JSON y significado del QR; actualizar consumidores y pruebas si cambia el contrato.
-5. No presentar la identificación facial como autenticación completa ni asumir que las asignaciones restringen QR.
+5. No presentar la comparación facial como prueba de presencia real ni asumir que las asignaciones restringen QR.
 6. No ejecutar pruebas/migraciones contra producción por defecto ni versionar secretos, fotos reales, bases locales o archivos de entorno.
 7. Documentar las verificaciones realizadas y actualizar limitaciones cuando se resuelvan.
 8. Crear commits separados por mejoras significativas y verificadas, como pidió el propietario, para facilitar revisión y retroceso.

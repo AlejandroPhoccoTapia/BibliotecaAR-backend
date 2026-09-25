@@ -27,6 +27,8 @@ class StudentProfile(models.Model):
     photo = models.ImageField(upload_to='students/faces/', blank=True, null=True)
     face_signature = models.JSONField(blank=True, null=True)
     assigned_books = models.ManyToManyField(Book, related_name='assigned_students', blank=True)
+    access_code_lookup = models.CharField(max_length=64, unique=True, blank=True, null=True)
+    access_code_hash = models.CharField(max_length=128, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -36,6 +38,25 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return self.full_name
+
+
+class StudentSession(models.Model):
+    student = models.ForeignKey(StudentProfile, related_name='sessions', on_delete=models.CASCADE)
+    token_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+
+class StudentReadingProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, related_name='reading_progress', on_delete=models.CASCADE)
+    scene = models.ForeignKey('Scene', related_name='student_progress', on_delete=models.CASCADE)
+    last_opened_at = models.DateTimeField(blank=True, null=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'scene'], name='unique_student_scene_progress'),
+        ]
 
 
 class Scene(models.Model):

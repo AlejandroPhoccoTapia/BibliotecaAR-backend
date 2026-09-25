@@ -212,5 +212,6 @@ REST_FRAMEWORK = {
         'teacher_login': os.environ.get('TEACHER_LOGIN_RATE', '20/minute'),
         'teacher_register': os.environ.get('TEACHER_REGISTER_RATE', '10/hour'),
         'student_face': os.environ.get('STUDENT_FACE_RATE', '30/minute'),
+        'student_code': os.environ.get('STUDENT_CODE_RATE', '10/minute'),
     },
 }

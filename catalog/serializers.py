@@ -157,6 +157,7 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
         read_only=True,
     )
     has_face_signature = serializers.SerializerMethodField()
+    has_access_code = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentProfile
@@ -169,6 +170,7 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
             'assigned_books',
             'assigned_books_detail',
             'has_face_signature',
+            'has_access_code',
             'is_active',
             'created_at',
             'updated_at',
@@ -184,6 +186,9 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
     def get_has_face_signature(self, obj):
         return bool(obj.face_signature)
 
+    def get_has_access_code(self, obj):
+        return bool(obj.access_code_hash)
+
     @transaction.atomic
     def create(self, validated_data):
         assigned_books = validated_data.pop('assigned_books', [])
@@ -195,11 +200,15 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         assigned_books = validated_data.pop('assigned_books', None)
+        was_active = instance.is_active
         self._attach_face_signature(validated_data)
         student = super().update(instance, validated_data)
 
         if assigned_books is not None:
             student.assigned_books.set(assigned_books)
+
+        if was_active and not student.is_active:
+            student.sessions.all().delete()
 
         return student
 
@@ -231,6 +240,38 @@ class StudentAssignedBookSerializer(FileUrlMixin, serializers.ModelSerializer):
 
     def get_cover_url(self, obj):
         return self._absolute_file_url(obj.cover)
+
+
+class StudentPublicSerializer(FileUrlMixin, serializers.ModelSerializer):
+    photo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StudentProfile
+        fields = ('id', 'full_name', 'classroom', 'photo_url')
+
+    def get_photo_url(self, obj):
+        return self._absolute_file_url(obj.photo)
+
+
+class StudentChapterSerializer(FileUrlMixin, serializers.ModelSerializer):
+    audio_url = serializers.SerializerMethodField()
+    is_completed = serializers.SerializerMethodField()
+    last_opened_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Scene
+        fields = ('id', 'title', 'order', 'text', 'audio_url', 'is_completed', 'last_opened_at')
+
+    def get_audio_url(self, obj):
+        return self._absolute_file_url(obj.audio)
+
+    def get_is_completed(self, obj):
+        progress = self.context.get('progress_by_scene', {}).get(obj.id)
+        return bool(progress and progress.completed_at)
+
+    def get_last_opened_at(self, obj):
+        progress = self.context.get('progress_by_scene', {}).get(obj.id)
+        return progress.last_opened_at if progress else None
 
 
 class StudentFaceLoginSerializer(serializers.Serializer):

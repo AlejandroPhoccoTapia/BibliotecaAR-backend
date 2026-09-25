@@ -2,7 +2,13 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    StudentBookDetailView,
+    StudentChapterProgressView,
+    StudentCodeLoginView,
     StudentFaceLoginView,
+    StudentLibraryView,
+    StudentLogoutView,
+    StudentSessionView,
     TeacherLoginView,
     TeacherLogoutView,
     TeacherRegisterView,
@@ -27,5 +33,11 @@ urlpatterns = [
     path('auth/login/', TeacherLoginView.as_view(), name='teacher-login'),
     path('auth/logout/', TeacherLogoutView.as_view(), name='teacher-logout'),
     path('student/face-login/', StudentFaceLoginView.as_view(), name='student-face-login'),
+    path('student/code-login/', StudentCodeLoginView.as_view(), name='student-code-login'),
+    path('student/me/', StudentSessionView.as_view(), name='student-session'),
+    path('student/logout/', StudentLogoutView.as_view(), name='student-logout'),
+    path('student/library/', StudentLibraryView.as_view(), name='student-library'),
+    path('student/books/<int:pk>/', StudentBookDetailView.as_view(), name='student-book-detail'),
+    path('student/chapters/<int:pk>/<str:action>/', StudentChapterProgressView.as_view(), name='student-chapter-progress'),
     path('unity/scenes/<str:qr_code>/', UnitySceneDetailView.as_view(), name='unity-scene-detail'),
 ]
