@@ -202,6 +202,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FACE_RECOGNITION_DISTANCE_THRESHOLD = 0.45
 
+MAX_IMAGE_UPLOAD_BYTES = int(os.environ.get('MAX_IMAGE_UPLOAD_BYTES', 10 * 1024 * 1024))
+MAX_AUDIO_UPLOAD_BYTES = int(os.environ.get('MAX_AUDIO_UPLOAD_BYTES', 50 * 1024 * 1024))
+MAX_GLB_UPLOAD_BYTES = int(os.environ.get('MAX_GLB_UPLOAD_BYTES', 100 * 1024 * 1024))
+
 # Per-process protection by default. Configure a shared cache for multiple workers.
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {

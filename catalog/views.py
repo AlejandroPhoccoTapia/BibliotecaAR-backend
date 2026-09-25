@@ -1,4 +1,4 @@
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate, login, logout
@@ -145,7 +145,9 @@ class TeacherStudentViewSet(ModelViewSet):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
-        return StudentProfile.objects.prefetch_related('assigned_books').order_by('full_name')
+        return StudentProfile.objects.prefetch_related(
+            Prefetch('assigned_books', queryset=Book.objects.annotate(scenes_count=Count('scenes'))),
+        ).order_by('full_name', 'id')
 
 
 class StudentFaceLoginView(APIView):

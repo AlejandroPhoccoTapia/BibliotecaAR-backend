@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from io import BytesIO
+import struct
 from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -42,7 +43,7 @@ class UnitySceneEndpointTests(TestCase):
             prefab_key='Bosque',
             glb_model=SimpleUploadedFile(
                 'bosque.glb',
-                b'glTF binary test content',
+                glb_test_content(),
                 content_type='model/gltf-binary',
             ),
         )
@@ -114,7 +115,7 @@ class TeacherApiTests(TestCase):
                 'prefab_key': 'Bosque',
                 'glb_model': SimpleUploadedFile(
                     'bosque.glb',
-                    b'glTF binary test content',
+                    glb_test_content(),
                     content_type='model/gltf-binary',
                 ),
             },
@@ -302,6 +303,12 @@ class TeacherApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['student']['full_name'], 'Ana Torres')
         self.assertEqual(response.json()['student']['assigned_books'][0]['title'], 'Libro asignado')
+
+
+def glb_test_content():
+    payload = b'{"asset":{"version":"2.0"}}'
+    payload += b' ' * (-len(payload) % 4)
+    return struct.pack('<4sII', b'glTF', 2, 20 + len(payload)) + struct.pack('<I4s', len(payload), b'JSON') + payload
 
 
 def face_image_upload(name):

@@ -1,4 +1,5 @@
 from io import BytesIO
+import math
 
 from PIL import Image, ImageOps
 
@@ -20,8 +21,15 @@ def build_face_signature(file_obj):
 
 
 def compare_signatures(first, second):
-    if not first or not second or len(first) != len(second):
-        raise FaceRecognitionError('Las firmas faciales no son comparables.')
+    expected = (SIGNATURE_SIZE // CELL_SIZE) ** 2 * LBP_BINS
+    for signature in (first, second):
+        if (
+            not isinstance(signature, (list, tuple)) or len(signature) != expected
+            or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                   or not math.isfinite(value) or value < 0 or value > 1 for value in signature)
+            or not math.isclose(sum(signature), 1, abs_tol=0.0001)
+        ):
+            raise FaceRecognitionError('Las firmas faciales no son comparables.')
 
     distance = 0
     for left, right in zip(first, second):

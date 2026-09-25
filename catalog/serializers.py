@@ -6,6 +6,7 @@ from django.db import transaction
 
 from .face_recognition import FaceRecognitionError, build_face_signature
 from .models import Book, Scene, StudentProfile
+from .validators import validate_audio_upload, validate_glb_upload, validate_image_upload
 
 
 class FileUrlMixin:
@@ -49,6 +50,7 @@ class TeacherRegisterSerializer(serializers.Serializer):
 
 
 class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
+    order = serializers.IntegerField(min_value=1, required=False)
     book_title = serializers.CharField(source='book.title', read_only=True)
     audio_url = serializers.SerializerMethodField()
     glb_model_name = serializers.SerializerMethodField()
@@ -82,6 +84,12 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
     def get_audio_url(self, obj):
         return self._absolute_file_url(obj.audio)
 
+    def validate_glb_model(self, value):
+        return validate_glb_upload(value) if value else value
+
+    def validate_audio(self, value):
+        return validate_audio_upload(value) if value else value
+
     def get_glb_model_name(self, obj):
         if not obj.glb_model:
             return None
@@ -108,7 +116,14 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
 
 class TeacherBookSerializer(FileUrlMixin, serializers.ModelSerializer):
     cover_url = serializers.SerializerMethodField()
-    scenes_count = serializers.IntegerField(read_only=True)
+    scenes_count = serializers.SerializerMethodField()
+
+    def get_scenes_count(self, obj):
+        count = getattr(obj, 'scenes_count', None)
+        return count if count is not None else obj.scenes.count()
+
+    def validate_cover(self, value):
+        return validate_image_upload(value) if value else value
 
     class Meta:
         model = Book
@@ -163,6 +178,9 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
     def get_photo_url(self, obj):
         return self._absolute_file_url(obj.photo)
 
+    def validate_photo(self, value):
+        return validate_image_upload(value) if value else value
+
     def get_has_face_signature(self, obj):
         return bool(obj.face_signature)
 
@@ -216,7 +234,7 @@ class StudentAssignedBookSerializer(FileUrlMixin, serializers.ModelSerializer):
 
 
 class StudentFaceLoginSerializer(serializers.Serializer):
-    image = serializers.ImageField()
+    image = serializers.ImageField(validators=[validate_image_upload])
 
 
 class StudentFaceLoginResultSerializer(FileUrlMixin, serializers.Serializer):
