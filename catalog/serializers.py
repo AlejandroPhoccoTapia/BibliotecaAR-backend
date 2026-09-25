@@ -76,6 +76,12 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
             'prefab_key',
             'qr_code',
             'qr_image_url',
+            'ar_marker_width_cm',
+            'ar_model_size_cm',
+            'ar_offset_x_cm',
+            'ar_offset_y_cm',
+            'ar_offset_z_cm',
+            'ar_yaw_degrees',
             'created_at',
             'updated_at',
         )
@@ -112,6 +118,15 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
             validated_data['glb_model'] = None
 
         return super().update(instance, validated_data)
+
+
+class TeacherScenePlacementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Scene
+        fields = (
+            'ar_marker_width_cm', 'ar_model_size_cm', 'ar_offset_x_cm',
+            'ar_offset_y_cm', 'ar_offset_z_cm', 'ar_yaw_degrees',
+        )
 
 
 class TeacherBookSerializer(FileUrlMixin, serializers.ModelSerializer):
@@ -318,6 +333,12 @@ class UnitySceneSerializer(FileUrlMixin, serializers.ModelSerializer):
             'audio_url',
             'glb_model_url',
             'qr_image_url',
+            'ar_marker_width_cm',
+            'ar_model_size_cm',
+            'ar_offset_x_cm',
+            'ar_offset_y_cm',
+            'ar_offset_z_cm',
+            'ar_yaw_degrees',
         )
 
     def get_cover_url(self, obj):

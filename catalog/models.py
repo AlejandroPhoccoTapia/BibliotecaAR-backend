@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.files.base import ContentFile
 from django.utils.text import slugify
 import qrcode
@@ -69,6 +70,12 @@ class Scene(models.Model):
     prefab_key = models.CharField(max_length=120)
     qr_code = models.CharField(max_length=80, unique=True, blank=True)
     qr_image = models.ImageField(upload_to='scenes/qr/', blank=True, null=True)
+    ar_marker_width_cm = models.FloatField(default=6.0, validators=[MinValueValidator(2), MaxValueValidator(30)])
+    ar_model_size_cm = models.FloatField(default=8.0, validators=[MinValueValidator(1), MaxValueValidator(50)])
+    ar_offset_x_cm = models.FloatField(default=0.0, validators=[MinValueValidator(-50), MaxValueValidator(50)])
+    ar_offset_y_cm = models.FloatField(default=0.5, validators=[MinValueValidator(-50), MaxValueValidator(50)])
+    ar_offset_z_cm = models.FloatField(default=0.0, validators=[MinValueValidator(-50), MaxValueValidator(50)])
+    ar_yaw_degrees = models.FloatField(default=0.0, validators=[MinValueValidator(-180), MaxValueValidator(180)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

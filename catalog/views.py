@@ -11,6 +11,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_protect
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -30,6 +31,7 @@ from .serializers import (
     TeacherBookSerializer,
     TeacherRegisterSerializer,
     TeacherSceneSerializer,
+    TeacherScenePlacementSerializer,
     TeacherStudentSerializer,
     UnitySceneSerializer,
 )
@@ -40,6 +42,7 @@ from .student_auth import (
     issue_student_token,
     reset_student_access_code,
 )
+from .teacher_mobile_auth import TeacherMobileAuthentication, issue_teacher_mobile_token
 
 
 def teacher_auth_payload(request, user=None):
@@ -126,6 +129,42 @@ class TeacherLogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response(teacher_auth_payload(request))
+
+
+class TeacherMobileLoginView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'teacher_login'
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if not user or not user.is_active or not user.is_staff:
+            return Response({'detail': 'Credenciales de docente inválidas.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'token': issue_teacher_mobile_token(user), 'expires_in_seconds': 1800})
+
+
+class TeacherMobileSceneView(APIView):
+    authentication_classes = [TeacherMobileAuthentication, SessionAuthentication]
+    permission_classes = [IsAdminUser]
+    parser_classes = [JSONParser]
+
+    def get_scene(self, qr_code):
+        return get_object_or_404(Scene.objects.select_related('book'), qr_code=qr_code)
+
+    def get(self, request, qr_code):
+        scene = self.get_scene(qr_code)
+        return Response(UnitySceneSerializer(scene, context={'request': request}).data)
+
+    def patch(self, request, qr_code):
+        scene = self.get_scene(qr_code)
+        serializer = TeacherScenePlacementSerializer(scene, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UnitySceneSerializer(scene, context={'request': request}).data)
 
 
 class TeacherBookViewSet(ModelViewSet):
