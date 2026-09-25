@@ -67,7 +67,7 @@ class Scene(models.Model):
     text = models.TextField()
     audio = models.FileField(upload_to='scenes/audio/', blank=True, null=True)
     glb_model = models.FileField(upload_to='scenes/models/', blank=True, null=True)
-    prefab_key = models.CharField(max_length=120)
+    prefab_key = models.CharField(max_length=120, blank=True, default='')
     qr_code = models.CharField(max_length=80, unique=True, blank=True)
     qr_image = models.ImageField(upload_to='scenes/qr/', blank=True, null=True)
     ar_marker_width_cm = models.FloatField(default=6.0, validators=[MinValueValidator(2), MaxValueValidator(30)])

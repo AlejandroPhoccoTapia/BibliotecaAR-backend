@@ -2,10 +2,12 @@ import shutil
 import tempfile
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Book, Scene
+from .tests import glb_test_content
 
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
@@ -79,3 +81,16 @@ class TeacherArPlacementTests(TestCase):
         self.teacher.set_password('nueva-clave')
         self.teacher.save()
         self.assertEqual(self.client.get(self.url, **header).status_code, 401)
+
+    def test_teacher_can_use_animated_glb_without_local_prefab_key(self):
+        self.client.force_login(self.teacher)
+        response = self.client.post(
+            reverse('teacher-scene-list'),
+            {
+                'book': self.book.pk, 'title': 'Modelo remoto', 'text': 'Un capítulo',
+                'glb_model': SimpleUploadedFile('animated.glb', glb_test_content(),
+                                                content_type='model/gltf-binary'),
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['prefab_key'], '')
