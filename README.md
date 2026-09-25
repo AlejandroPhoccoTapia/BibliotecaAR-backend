@@ -80,7 +80,7 @@ python -m venv .venv
 .\.venv\Scripts\python manage.py runserver 0.0.0.0:8000
 ```
 
-El superusuario puede usar `http://127.0.0.1:8000/admin/` y el panel docente. Alternativamente, omitir `createsuperuser` y registrar el primer docente desde el panel si todavía no existe ningún staff. No hay datos precargados ni contraseña por defecto.
+El superusuario puede usar `http://127.0.0.1:8000/admin/` y el panel docente. También se pueden crear cuentas docentes desde el panel en cualquier momento. No hay datos precargados ni contraseña por defecto.
 
 Sin `DATABASE_URL`, se usa `db.sqlite3`; sin Supabase Storage, se guardan archivos en `media/`. Iniciar el frontend en otra terminal según su README. Para Unity en un teléfono, usar la IP LAN del ordenador, la misma red y permitir el puerto 8000 en el firewall; `localhost` en Android apunta al propio teléfono.
 
@@ -97,7 +97,7 @@ Se usan sesiones Django con cookies. El panel envía `credentials: 'include'` y 
 | `POST /api/auth/register/` | Recibe `username`, `password` (mínimo 8), `first_name` y `last_name` opcionales. |
 | `POST /api/auth/logout/` | Requiere autenticación y cierra sesión. |
 
-Si no existe ningún staff, el registro admite al primer docente sin sesión e inicia su sesión. Después exige un docente autenticado y conserva su sesión al crear otra cuenta. La respuesta incluye `created_user` con el ID y nombre de usuario de la cuenta creada, además de los datos de la sesión actual. Se validan el formato del nombre de usuario y los validadores de contraseña de Django configurados en settings.
+El registro está abierto: cualquier persona puede crear una cuenta docente en cualquier momento. Al registrarse sin sesión, inicia sesión automáticamente; si ya había una sesión docente, se conserva. La respuesta incluye `created_user` con el ID y nombre de usuario de la cuenta creada, además de los datos de la sesión actual. Se validan el formato del nombre de usuario y los validadores de contraseña de Django configurados en settings.
 
 Login y registro exigen CSRF también sin sesión: obtener primero el token con `GET /api/auth/me/` y enviar la cookie y `X-CSRFToken`. Login, registro e identificación facial tienen límites de solicitudes configurables. Usan la caché Django; la caché local por proceso no coordina varios workers. Para ese despliegue se necesita una caché compartida; estos límites no sustituyen protección contra abuso en el servidor de entrada.
 
@@ -223,7 +223,7 @@ Prueba integral: iniciar los tres componentes, crear libro publicado y capítulo
 - La validación de cabecera GLB no garantiza un modelo utilizable y el audio no se decodifica; una subida aceptada puede fallar en Unity.
 - El storage no es transaccional: quedan pendientes reconciliación de huérfanos y reintentos de borrados fallidos.
 - Sin paginación, aislamiento por docente ni indexación biométrica: se comparan todos los perfiles activos con firma.
-- El alta pública inicial no serializa registros concurrentes del primer docente.
+- El registro docente es público y no verifica correo ni aprobación administrativa; los límites de solicitudes ayudan a reducir abusos.
 - Las fotos usan URLs públicas y los límites de solicitudes requieren caché compartida para coordinar varios workers.
 
 ## 12. Guía para el siguiente asistente

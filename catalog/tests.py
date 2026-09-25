@@ -234,7 +234,7 @@ class TeacherApiTests(TestCase):
         user = get_user_model().objects.get(username='primer-docente')
         self.assertTrue(user.is_staff)
 
-    def test_anonymous_user_cannot_register_second_teacher(self):
+    def test_anonymous_user_can_register_teacher_when_another_exists(self):
         self.client.logout()
 
         response = self.client.post(
@@ -246,7 +246,9 @@ class TeacherApiTests(TestCase):
             content_type='application/json',
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json()['is_authenticated'])
+        self.assertTrue(get_user_model().objects.get(username='otro-docente').is_staff)
 
     def test_authenticated_teacher_can_register_another_teacher(self):
         response = self.client.post(

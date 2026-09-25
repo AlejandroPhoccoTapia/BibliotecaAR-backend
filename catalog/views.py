@@ -93,13 +93,6 @@ class TeacherRegisterView(APIView):
     parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
-        has_teacher = get_user_model().objects.filter(is_staff=True).exists()
-        if has_teacher and not (request.user.is_authenticated and request.user.is_staff):
-            return Response(
-                {'detail': 'Solo un docente autenticado puede crear otra cuenta docente.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         serializer = TeacherRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
