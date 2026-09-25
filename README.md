@@ -57,7 +57,7 @@ render.yaml             Despliegue previsto en Render
 | Entidad | Datos y relaciones |
 | --- | --- |
 | `Book` | `title`, `description`, `cover`, `is_published`, fechas; tiene muchas escenas. |
-| `Scene` | `book`, `title`, `order`, `text`, `audio`, `glb_model`, `prefab_key`, `qr_code`, `qr_image`, seis ajustes físicos AR y fechas. |
+| `Scene` | `book`, `title`, `order`, `text`, `audio`, `glb_model`, `tap_animation_name`, `prefab_key`, `qr_code`, `qr_image`, seis ajustes físicos AR y fechas. |
 | `StudentProfile` | `full_name`, `classroom`, `photo`, `face_signature` JSON, `assigned_books` muchos-a-muchos, código de acceso protegido, `is_active`, fechas. |
 | `StudentSession` | Token opaco guardado como hash, estudiante y vencimiento a 30 días. |
 | `StudentReadingProgress` | Un registro por estudiante/capítulo con última apertura y fecha de finalización. |
@@ -144,6 +144,8 @@ Respuestas adicionales:
 - Estudiantes: `photo_url`, `assigned_books_detail`, `has_face_signature`, fechas; la firma no se expone mediante este serializer.
 
 PATCH de escena admite `{"remove_glb_model": true}` y el panel tiene un control para enviarlo. La API comprueba extensión `.glb`, cabecera GLB v2 y longitud declarada, además del tamaño máximo. No valida todos los chunks ni la compatibilidad del modelo con Unity. Audio admite `.mp3`, `.wav`, `.ogg`, `.m4a`, `.aac` y `.flac`; comprueba extensión y tamaño, sin decodificar el contenido. Las imágenes pasan por ImageField y un límite de tamaño. Estas validaciones pertenecen a los serializers de la API; no se aplican automáticamente a escrituras directas por ORM/admin.
+
+`tap_animation_name` guarda el nombre exacto de la animación del GLB que se reproduce al tocar el modelo. Vacío conserva la selección automática de `Walk`/`Caminar`. El panel obtiene los nombres del visor GLB; la API limita la longitud, pero no inspecciona el archivo para verificar que el clip exista. Al retirar o sustituir un GLB sin enviar un nuevo nombre, se borra la selección anterior.
 
 Los ajustes AR son `ar_marker_width_cm` (2–30; ancho físico del QR impreso), `ar_model_size_cm` (1–50; mayor dimensión del modelo), `ar_offset_x_cm`, `ar_offset_y_cm`, `ar_offset_z_cm` (cada uno −50 a 50) y `ar_yaw_degrees` (−180 a 180). Por defecto valen 6, 8, 0, 0.5, 0 y 0. Cambiar el ancho del marcador no escala el modelo: Unity normaliza el GLB/prefab a `ar_model_size_cm` de forma independiente. El docente puede corregir estos valores en el panel y probarlos directamente con el teléfono sobre la página.
 

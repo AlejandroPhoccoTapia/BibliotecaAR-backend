@@ -73,6 +73,7 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
             'glb_model_name',
             'glb_model_url',
             'remove_glb_model',
+            'tap_animation_name',
             'prefab_key',
             'qr_code',
             'qr_image_url',
@@ -116,6 +117,10 @@ class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
 
         if remove_glb_model and 'glb_model' not in validated_data:
             validated_data['glb_model'] = None
+        if validated_data.get('glb_model') is None and 'glb_model' in validated_data:
+            validated_data['tap_animation_name'] = ''
+        elif 'glb_model' in validated_data and 'tap_animation_name' not in validated_data:
+            validated_data['tap_animation_name'] = ''
 
         return super().update(instance, validated_data)
 
@@ -332,6 +337,7 @@ class UnitySceneSerializer(FileUrlMixin, serializers.ModelSerializer):
             'cover_url',
             'audio_url',
             'glb_model_url',
+            'tap_animation_name',
             'qr_image_url',
             'ar_marker_width_cm',
             'ar_model_size_cm',

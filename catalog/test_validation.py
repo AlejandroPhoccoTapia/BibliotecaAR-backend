@@ -31,6 +31,24 @@ class UploadValidationTests(TestCase):
         response = self.create_scene(glb_model=SimpleUploadedFile('model.glb', glb_test_content()))
         self.assertEqual(response.status_code, 201)
 
+    def test_replacing_or_removing_glb_clears_old_tap_animation(self):
+        scene = Scene.objects.create(book=self.book, text='Capítulo',
+            glb_model=SimpleUploadedFile('old.glb', glb_test_content()),
+            tap_animation_name='Saludar')
+        url = reverse('teacher-scene-detail', args=[scene.pk])
+
+        replaced = self.client.patch(url, {
+            'glb_model': SimpleUploadedFile('new.glb', glb_test_content()),
+        }, format='multipart')
+        self.assertEqual(replaced.status_code, 200)
+        self.assertEqual(replaced.data['tap_animation_name'], '')
+
+        scene.tap_animation_name = 'Girar'
+        scene.save(update_fields=['tap_animation_name'])
+        removed = self.client.patch(url, {'remove_glb_model': True}, format='json')
+        self.assertEqual(removed.status_code, 200)
+        self.assertEqual(removed.data['tap_animation_name'], '')
+
     def test_zero_order_is_rejected(self):
         response = self.create_scene(order=0)
         self.assertEqual(response.status_code, 400)

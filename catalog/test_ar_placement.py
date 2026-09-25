@@ -88,9 +88,16 @@ class TeacherArPlacementTests(TestCase):
             reverse('teacher-scene-list'),
             {
                 'book': self.book.pk, 'title': 'Modelo remoto', 'text': 'Un capítulo',
+                'tap_animation_name': 'Saludar',
                 'glb_model': SimpleUploadedFile('animated.glb', glb_test_content(),
                                                 content_type='model/gltf-binary'),
             },
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['prefab_key'], '')
+        self.assertEqual(response.json()['tap_animation_name'], 'Saludar')
+
+        self.book.is_published = True
+        self.book.save()
+        public = self.client.get(reverse('unity-scene-detail', kwargs={'qr_code': response.json()['qr_code']}))
+        self.assertEqual(public.json()['tap_animation_name'], 'Saludar')
