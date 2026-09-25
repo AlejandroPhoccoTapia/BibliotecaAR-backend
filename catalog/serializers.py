@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 
 from .face_recognition import FaceRecognitionError, build_face_signature
 from .models import Book, Scene, StudentProfile
@@ -17,8 +20,8 @@ class FileUrlMixin:
 
 
 class TeacherRegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150)
-    password = serializers.CharField(min_length=8, write_only=True)
+    username = serializers.CharField(max_length=150, validators=[get_user_model().username_validator])
+    password = serializers.CharField(min_length=8, write_only=True, trim_whitespace=False)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
 
@@ -35,6 +38,14 @@ class TeacherRegisterSerializer(serializers.Serializer):
             last_name=validated_data.get('last_name', ''),
             is_staff=True,
         )
+
+    def validate(self, attrs):
+        user = get_user_model()(**{key: value for key, value in attrs.items() if key != 'password'})
+        try:
+            validate_password(attrs['password'], user=user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'password': exc.messages}) from exc
+        return attrs
 
 
 class TeacherSceneSerializer(FileUrlMixin, serializers.ModelSerializer):
@@ -156,6 +167,7 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
     def get_has_face_signature(self, obj):
         return bool(obj.face_signature)
 
+    @transaction.atomic
     def create(self, validated_data):
         assigned_books = validated_data.pop('assigned_books', [])
         self._attach_face_signature(validated_data)
@@ -163,6 +175,7 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
         student.assigned_books.set(assigned_books)
         return student
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         assigned_books = validated_data.pop('assigned_books', None)
         self._attach_face_signature(validated_data)
@@ -174,6 +187,9 @@ class TeacherStudentSerializer(FileUrlMixin, serializers.ModelSerializer):
         return student
 
     def _attach_face_signature(self, validated_data):
+        if 'photo' in validated_data and validated_data['photo'] is None:
+            validated_data['face_signature'] = None
+            return
         photo = validated_data.get('photo')
         if not photo:
             return
@@ -217,7 +233,7 @@ class StudentFaceLoginResultSerializer(FileUrlMixin, serializers.Serializer):
             'classroom': student.classroom,
             'photo_url': self._absolute_file_url(student.photo),
             'assigned_books': StudentAssignedBookSerializer(
-                student.assigned_books.all(),
+                [book for book in student.assigned_books.all() if book.is_published],
                 many=True,
                 context=self.context,
             ).data,

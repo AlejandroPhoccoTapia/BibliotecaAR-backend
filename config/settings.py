@@ -201,3 +201,12 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 FACE_RECOGNITION_DISTANCE_THRESHOLD = 0.45
+
+# Per-process protection by default. Configure a shared cache for multiple workers.
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_RATES': {
+        'teacher_login': os.environ.get('TEACHER_LOGIN_RATE', '20/minute'),
+        'teacher_register': os.environ.get('TEACHER_REGISTER_RATE', '10/hour'),
+        'student_face': os.environ.get('STUDENT_FACE_RATE', '30/minute'),
+    },
+}

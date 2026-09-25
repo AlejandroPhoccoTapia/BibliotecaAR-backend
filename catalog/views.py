@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_protect
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -55,8 +57,11 @@ class TeacherSessionView(APIView):
         return Response(teacher_auth_payload(request))
 
 
+@method_decorator(csrf_protect, name='dispatch')
 class TeacherLoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'teacher_login'
     parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
@@ -80,8 +85,11 @@ class TeacherLoginView(APIView):
         return Response(teacher_auth_payload(request, user))
 
 
+@method_decorator(csrf_protect, name='dispatch')
 class TeacherRegisterView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'teacher_register'
     parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
@@ -95,9 +103,12 @@ class TeacherRegisterView(APIView):
         serializer = TeacherRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        login(request, user)
+        if not request.user.is_authenticated:
+            login(request, user)
+        payload = teacher_auth_payload(request)
+        payload['created_user'] = {'id': user.id, 'username': user.username}
         return Response(
-            teacher_auth_payload(request, user),
+            payload,
             status=status.HTTP_201_CREATED,
         )
 
@@ -139,6 +150,8 @@ class TeacherStudentViewSet(ModelViewSet):
 
 class StudentFaceLoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'student_face'
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
