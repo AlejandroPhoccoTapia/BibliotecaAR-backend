@@ -1,0 +1,69 @@
+@startuml
+title Diagrama de paquetes - aplicación móvil BibliotecaAR
+left to right direction
+skinparam packageStyle folder
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #64748B
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  FontColor #0F172A
+}
+skinparam rectangle {
+  BackgroundColor #F8FAFC
+  BorderColor #94A3B8
+  FontColor #334155
+}
+
+package "Aplicación móvil (Unity / Android)" as MOBILE {
+  package "presentación" as UI {
+    rectangle "Pantallas de acceso y biblioteca\nControles de lectura AR" as UI_INFO
+  }
+  package "escaneo QR" as SCAN {
+    rectangle "QRCodeScanner.cs\nScannedQRData.cs" as SCAN_INFO
+  }
+  package "sesión y API" as CLIENT {
+    rectangle "StudentAppSession.cs\nTeacherPreviewSession.cs" as CLIENT_INFO
+  }
+  package "experiencia AR" as AR {
+    rectangle "ARSceneController.cs\nQRTrackedImagePlacer.cs\nAudio y animaciones" as AR_INFO
+  }
+}
+
+package "Servicios externos" as EXTERNAL {
+  package "Backend Django" as BACKEND {
+    rectangle "API de estudiantes, docentes\ny capítulos AR" as BACKEND_INFO
+  }
+  package "Supabase" as SUPABASE {
+    package "PostgreSQL" as DB {
+      rectangle "Libros, estudiantes\ny progreso" as DB_INFO
+    }
+    package "Storage" as FILES {
+      rectangle "Audio, GLB e imágenes QR" as FILES_INFO
+    }
+  }
+  package "ZXing" as ZXING {
+    rectangle "Lectura del QR" as ZXING_INFO
+  }
+  package "AR Foundation / ARCore" as ARCORE {
+    rectangle "Seguimiento de imagen" as ARCORE_INFO
+  }
+  package "Android TextToSpeech" as TTS {
+    rectangle "Voz de narración" as TTS_INFO
+  }
+}
+
+UI ..> SCAN : iniciar escáner
+UI ..> CLIENT : acceso y biblioteca
+SCAN ..> AR : código leído
+CLIENT ..> BACKEND : HTTP
+AR ..> BACKEND : consulta capítulo
+BACKEND ..> DB : ORM
+BACKEND ..> FILES : API S3
+SCAN ..> ZXING
+AR ..> ARCORE
+AR ..> TTS
+
+@enduml

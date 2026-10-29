@@ -1,5 +1,11 @@
 # Diagrama de paquetes de BibliotecaAR
 
+Para obtener una figura con las **cajas con pestaña** del ejemplo, abre el [diagrama detallado de la app móvil en PlantUML](diagrama-paquetes-app-movil.puml) en un editor compatible o copia su contenido en el [editor oficial de PlantUML](https://editor.plantuml.com/uml/edge). También están la [imagen PNG](diagrama-paquetes-app-movil.png) y la [imagen SVG](diagrama-paquetes-app-movil.svg) listas para insertar en la tesis. El bloque Mermaid de abajo muestra el **sistema completo** directamente en GitHub; el PlantUML se concentra en Unity para conservar la legibilidad del ejemplo que compartiste.
+
+![Diagrama de paquetes de la app móvil y sus dependencias externas](diagrama-paquetes-app-movil.svg)
+
+En esta vista, Django se dibuja fuera de la app móvil porque es otro repositorio del mismo proyecto. La conexión de Unity llega a la API de Django; **Unity no se conecta directamente a PostgreSQL**.
+
 Este es el diagrama de paquetes **general** del proyecto. Los tres contenedores de código corresponden a los tres repositorios; el cuarto reúne servicios y bibliotecas **externos** para mostrar conexiones como la de Django con la base de datos. Los bloques internos agrupan código con una responsabilidad común. Las flechas discontinuas indican que el paquete de origen **depende** del destino. No representan el orden temporal de uso de la aplicación.
 
 ```mermaid
@@ -79,4 +85,4 @@ flowchart LR
 
 La base de datos y el almacenamiento aparecen como **servicios externos**, no como paquetes internos del código. En desarrollo se usa SQLite y media local; PostgreSQL y Supabase Storage representan el despliegue configurado. La autenticación de docentes y estudiantes se implementa en **Django**: el proyecto no usa Supabase Auth ni Google Identity. Vercel y Render alojan aplicaciones, por lo que su ubicación física corresponde a un **diagrama de despliegue**, no a estas dependencias de paquetes.
 
-Para una explicación general de la arquitectura en la tesis, **este único diagrama de paquetes es suficiente**. Un segundo diagrama interno de Django o Unity solo aporta valor si el documento exige describir sus dependencias con más detalle; no conviene multiplicar diagramas que repitan las mismas relaciones.
+Para una explicación general de la arquitectura en la tesis, **el diagrama Mermaid del sistema completo es suficiente**. La versión PlantUML es un detalle opcional de la app móvil, con la misma notación visual del ejemplo; úsala si necesitas explicar sus paquetes internos y conexiones externas. No hace falta insertar ambas figuras si repetirían la misma explicación en tu documento.
