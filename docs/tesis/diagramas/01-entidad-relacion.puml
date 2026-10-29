@@ -1,0 +1,102 @@
+@startuml
+title BibliotecaAR - modelo entidad-relación (atributos relevantes)
+left to right direction
+hide circle
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor #F8FAFC
+  BorderColor #355C7D
+  FontColor #172B4D
+}
+
+entity "auth_user" as USER {
+  * id : bigint <<PK>>
+  --
+  username : varchar(150)
+  password : varchar(128)
+  is_staff : boolean
+}
+
+entity "catalog_book" as BOOK {
+  * id : bigint <<PK>>
+  --
+  title : varchar(180)
+  description : text
+  cover : varchar(100)
+  is_published : boolean
+}
+
+entity "catalog_scene" as SCENE {
+  * id : bigint <<PK>>
+  --
+  book_id : bigint <<FK>>
+  title : varchar(180)
+  order : integer
+  text : text
+  qr_code : varchar(80) <<UQ>>
+  qr_image : varchar(100)
+  audio : varchar(100)
+  glb_model : varchar(100)
+  ar_marker_width_cm : float
+  ar_model_size_cm : float
+}
+
+entity "catalog_studentprofile" as STUDENT {
+  * id : bigint <<PK>>
+  --
+  full_name : varchar(180)
+  classroom : varchar(80)
+  photo : varchar(100)
+  face_signature : JSON
+  access_code_lookup : varchar(64) <<UQ>>
+  access_code_hash : varchar(128)
+  is_active : boolean
+}
+
+entity "catalog_studentprofile_assigned_books" as ASSIGNED {
+  * id : bigint <<PK>>
+  --
+  studentprofile_id : bigint <<FK>>
+  book_id : bigint <<FK>>
+  unique(studentprofile_id, book_id)
+}
+
+entity "catalog_studentsession" as SESSION {
+  * id : bigint <<PK>>
+  --
+  student_id : bigint <<FK>>
+  token_hash : varchar(64) <<UQ>>
+  expires_at : datetime
+}
+
+entity "catalog_studentreadingprogress" as PROGRESS {
+  * id : bigint <<PK>>
+  --
+  student_id : bigint <<FK>>
+  scene_id : bigint <<FK>>
+  last_opened_at : datetime
+  completed_at : datetime
+  unique(student_id, scene_id)
+}
+
+BOOK ||--o{ SCENE : contiene
+STUDENT ||--o{ ASSIGNED : tiene
+BOOK ||--o{ ASSIGNED : asignado
+STUDENT ||--o{ SESSION : inicia
+STUDENT ||--o{ PROGRESS : registra
+SCENE ||--o{ PROGRESS : leído
+
+note bottom of USER
+  Los docentes son usuarios is_staff=true.
+  No existe una FK de docente a libro:
+  el catálogo es compartido.
+end note
+
+note bottom of SCENE
+  Se omiten fechas y otros parámetros AR
+  para mantener la figura legible.
+end note
+@enduml

@@ -1,0 +1,53 @@
+@startuml
+title BibliotecaAR - creación de capítulo y QR
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam ParticipantBorderColor #355C7D
+skinparam ParticipantBackgroundColor #EAF2F8
+skinparam ArrowColor #355C7D
+
+actor Docente
+participant "Panel React" as PANEL
+participant "API Django" as API
+participant "TeacherSceneSerializer" as SERIALIZER
+participant "Scene.save()" as SCENE
+participant "qrcode" as QR
+database "Storage" as STORAGE
+database "BD" as DB
+participant "qr_pdf.py" as PDF
+
+Docente -> PANEL : Completa capítulo y pulsa Guardar
+PANEL -> API : POST /api/teacher/scenes/
+API -> SERIALIZER : Validar texto, libro y archivos
+alt Datos inválidos
+  SERIALIZER --> API : Errores de validación
+  API --> PANEL : HTTP 400
+  PANEL --> Docente : Mostrar errores
+else Datos válidos
+  SERIALIZER -> SCENE : save()
+  SCENE -> QR : Generar imagen desde qr_code
+  QR --> SCENE : PNG del QR
+  SCENE -> STORAGE : Guardar PNG y archivos subidos
+  SCENE -> DB : Insertar capítulo
+  DB --> SCENE : ID asignado
+  SCENE --> API : Capítulo guardado
+  API --> PANEL : HTTP 201 + qr_code + qr_image_url
+  PANEL --> Docente : Mostrar capítulo y QR
+end
+
+opt Descargar PDF imprimible
+  Docente -> PANEL : Descargar PDF
+  PANEL -> API : GET /api/teacher/scenes/{id}/printable-qr/
+  API -> PDF : Generar a ar_marker_width_cm
+  PDF --> API : PDF vectorial
+  API --> PANEL : application/pdf
+  PANEL --> Docente : Descargar archivo
+end
+
+note over API,DB
+  Para que Unity consulte el capítulo públicamente,
+  el libro debe estar publicado.
+end note
+@enduml

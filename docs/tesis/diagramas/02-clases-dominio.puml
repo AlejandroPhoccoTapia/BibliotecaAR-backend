@@ -1,0 +1,61 @@
+@startuml
+title BibliotecaAR - clases principales del dominio
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #F8FAFC
+  BorderColor #355C7D
+  FontColor #172B4D
+}
+
+class Book {
+  +title: str
+  +description: str
+  +is_published: bool
+}
+
+class Scene {
+  +title: str
+  +order: int
+  +text: str
+  +qr_code: str
+  +ar_model_size_cm: float
+  --
+  +save()
+  -_build_qr_file()
+}
+
+class StudentProfile {
+  +full_name: str
+  +classroom: str
+  +is_active: bool
+  +face_signature: JSON
+  +access_code_hash: str
+}
+
+class StudentSession {
+  +token_hash: str
+  +created_at: datetime
+  +expires_at: datetime
+}
+
+class StudentReadingProgress {
+  +last_opened_at: datetime?
+  +completed_at: datetime?
+}
+
+Book "1" *-- "0..*" Scene : capítulos
+StudentProfile "0..*" -- "0..*" Book : libros asignados
+StudentProfile "1" *-- "0..*" StudentSession : sesiones
+StudentProfile "1" *-- "0..*" StudentReadingProgress : avance
+Scene "1" *-- "0..*" StudentReadingProgress : lectura
+
+note bottom of StudentProfile
+  El acceso por rostro es experimental.
+  El código personal es la alternativa.
+end note
+@enduml

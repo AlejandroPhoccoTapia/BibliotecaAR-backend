@@ -1,0 +1,42 @@
+@startuml
+title BibliotecaAR - navegabilidad del panel docente
+top to bottom direction
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam state {
+  BackgroundColor #EAF2F8
+  BorderColor #355C7D
+  FontColor #172B4D
+  ArrowColor #355C7D
+}
+hide empty description
+
+state "Acceso docente\n(inicio o registro)" as LOGIN
+state "Biblioteca de libros" as BOOKS
+state "Formulario de libro" as BOOK_FORM
+state "Detalle del libro\n(capítulos, QR y PDF)" as BOOK_DETAIL
+state "Formulario de capítulo" as CHAPTER_FORM
+state "Lista de estudiantes" as STUDENTS
+state "Formulario de estudiante\n(foto y asignaciones)" as STUDENT_FORM
+
+[*] -down-> LOGIN
+LOGIN -down-> BOOKS : autenticación correcta
+BOOKS -left-> BOOK_FORM : crear o editar libro
+BOOKS -down-> BOOK_DETAIL : abrir libro
+BOOK_DETAIL -down-> CHAPTER_FORM : crear o editar capítulo
+BOOKS -right-> STUDENTS : pestaña estudiantes
+STUDENTS -down-> STUDENT_FORM : registrar o editar
+
+note right of BOOK_DETAIL
+  La vista 3D, el QR y la descarga PDF
+  son acciones en esta pantalla;
+  no son pantallas independientes.
+end note
+
+note bottom of LOGIN
+  Desde las pantallas autenticadas se puede
+  volver o cerrar sesión. Los formularios
+  retornan a su lista o detalle al guardar.
+end note
+@enduml

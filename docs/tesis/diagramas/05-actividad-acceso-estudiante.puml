@@ -1,0 +1,47 @@
+@startuml
+title BibliotecaAR - acceso del estudiante
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam activity {
+  BackgroundColor #EAF2F8
+  BorderColor #355C7D
+  DiamondBackgroundColor #FFF1CE
+  DiamondBorderColor #B7791F
+  ArrowColor #355C7D
+}
+
+start
+:Abrir aplicación móvil;
+if (¿Se recordó una sesión?) then (Sí)
+  :Validar token con /api/student/me/;
+  if (¿La sesión sigue vigente?) then (Sí)
+    :Cargar biblioteca y último avance;
+    stop
+  else (No)
+    :Eliminar token local vencido;
+  endif
+endif
+
+:Elegir acceso por código o rostro;
+if (¿Usa código?) then (Sí)
+  :Introducir código personal;
+  :POST /api/student/code-login/;
+else (No)
+  :Tomar fotografía facial;
+  :POST /api/student/face-login/;
+endif
+
+if (¿Identificación aceptada?) then (Sí)
+  :Recibir token de estudiante;
+  if (¿Recordar este dispositivo?) then (Sí)
+    :Guardar token localmente;
+  endif
+  :Consultar /api/student/library/;
+  :Mostrar libros y opción Retomar;
+else (No)
+  :Mostrar error y permitir reintentar
+  o usar el código personal;
+endif
+stop
+@enduml

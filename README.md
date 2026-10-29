@@ -25,6 +25,8 @@ El docente crea un libro, añade capítulos con recursos, publica el libro y obt
 
 El [diagrama de paquetes del proyecto](docs/diagrama-paquetes.md) muestra las responsabilidades y dependencias entre los tres repositorios y sus módulos principales.
 
+Las [figuras para la tesis](docs/tesis/diagramas/README.md) comparan los tipos de diagramas presentes en los borradores, señalan los que faltaban en el de Alejandro y ofrecen versiones editables, PNG y SVG basadas en el código actual.
+
 **Vocabulario:** un «capítulo» del panel es un registro `Scene` de Django. No es una escena Unity: `QRScanScene` y `ARScene` son las pantallas del cliente móvil. El QR contiene un identificador, no una URL. `prefab_key` identifica un recurso local Unity; `glb_model` es un archivo descargable.
 
 ## 2. Tecnologías y estructura

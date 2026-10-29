@@ -1,0 +1,48 @@
+@startuml
+title BibliotecaAR - escaneo y lectura AR
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam activity {
+  BackgroundColor #EAF2F8
+  BorderColor #355C7D
+  DiamondBackgroundColor #FFF1CE
+  DiamondBorderColor #B7791F
+  ArrowColor #355C7D
+}
+
+start
+:Abrir escáner desde la biblioteca;
+:Solicitar permiso de cámara;
+if (¿Permiso concedido?) then (Sí)
+  :Enfocar el QR del capítulo;
+  :ZXing obtiene qr_code;
+  if (¿Se leyó un código?) then (Sí)
+    :Abrir ARScene;
+    :Consultar /api/unity/scenes/{qr_code}/;
+    if (¿Existe y está publicado?) then (Sí)
+      :Mostrar texto narrativo;
+      :Preparar audio y modelo si existen;
+      :Registrar imagen QR en ARCore;
+      if (¿Hay seguimiento AR?) then (Sí)
+        :Colocar modelo sobre el QR;
+      else (No)
+        :Guiar al usuario para recuperar seguimiento;
+        :Mantener texto y audio disponibles;
+      endif
+      if (¿Estudiante autenticado?) then (Sí)
+        :Guardar apertura del capítulo;
+        :Permitir marcarlo como leído;
+      endif
+    else (No)
+      :Explicar QR inexistente o libro sin publicar;
+      :Ofrecer volver a escanear;
+    endif
+  else (No)
+    :Seguir buscando o reintentar;
+  endif
+else (No)
+  :Explicar cómo habilitar la cámara;
+endif
+stop
+@enduml

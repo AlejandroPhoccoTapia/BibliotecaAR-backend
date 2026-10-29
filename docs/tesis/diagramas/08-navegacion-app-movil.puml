@@ -1,0 +1,44 @@
+@startuml
+title BibliotecaAR - navegabilidad de la aplicación móvil
+top to bottom direction
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam state {
+  BackgroundColor #EAF2F8
+  BorderColor #355C7D
+  FontColor #172B4D
+  ArrowColor #355C7D
+}
+hide empty description
+
+state "Acceso estudiante\n(código o rostro)" as LOGIN
+state "Biblioteca / Retomar" as LIBRARY
+state "Libro y capítulos" as BOOK
+state "Lectura del capítulo" as READ
+state "Escáner QR" as SCAN
+state "Escena AR\n(modelo, texto y audio)" as AR
+state "Acceso docente" as TEACHER_LOGIN
+state "Vista docente lista" as TEACHER_READY
+
+[*] -down-> LOGIN
+LOGIN -down-> LIBRARY : identificación aceptada
+LIBRARY -left-> BOOK : abrir libro
+BOOK -down-> READ : abrir capítulo
+LIBRARY -down-> SCAN : escanear QR
+READ -right-> SCAN : ver en AR
+SCAN -down-> AR : QR leído
+LOGIN -right-> TEACHER_LOGIN : elegir Docente
+TEACHER_LOGIN -down-> TEACHER_READY : credenciales válidas
+TEACHER_READY -left-> SCAN : escanear para ajustar
+
+note right of AR
+  En vista docente, el ajuste del modelo
+  es un panel dentro de ARScene.
+end note
+
+note bottom of LIBRARY
+  La navegación permite volver, cambiar
+  de estudiante y escanear otro QR.
+end note
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+title BibliotecaAR - escaneo y lectura en realidad aumentada
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam ParticipantBorderColor #355C7D
+skinparam ParticipantBackgroundColor #EAF2F8
+skinparam ArrowColor #355C7D
+
+actor Estudiante
+participant "QRCodeScanner" as SCANNER
+participant "ZXing" as ZXING
+participant "ARSceneController" as AR
+participant "API Django" as API
+database "BD" as DB
+database "Media Storage" as MEDIA
+participant "AR Foundation / ARCore" as ARCORE
+participant "Interfaz AR" as UI
+
+Estudiante -> SCANNER : Enfoca el QR impreso
+SCANNER -> ZXING : Decodificar fotograma
+ZXING --> SCANNER : qr_code
+SCANNER -> AR : Abrir ARScene con qr_code
+AR -> API : GET /api/unity/scenes/{qr_code}/
+API -> DB : Buscar capítulo publicado
+alt QR inexistente o libro no publicado
+  DB --> API : Sin resultado
+  API --> AR : HTTP 404
+  AR -> UI : Explicar error y ofrecer reintento
+else Capítulo disponible
+  DB --> API : Scene y Book
+  API --> AR : Texto, URLs y medidas AR
+  opt Hay archivos multimedia
+    AR -> MEDIA : Descargar QR, GLB y/o audio
+    MEDIA --> AR : Recursos disponibles
+  end
+  AR -> UI : Mostrar título, narración y audio
+  AR -> ARCORE : Registrar imagen QR para seguimiento
+  alt ARCore sigue la imagen
+    ARCORE --> AR : Pose del marcador
+    AR -> UI : Mostrar modelo sobre la página
+  else Seguimiento no disponible
+    AR -> UI : Mantener lectura y mostrar guía
+  end
+  opt Estudiante con sesión válida
+    AR -> API : POST /api/student/qr/{qr_code}/open/
+    API -> DB : Guardar last_opened_at
+    Estudiante -> UI : Pulsa Terminé
+    UI -> AR : onMarkCompleted()
+    AR -> API : POST /api/student/qr/{qr_code}/complete/
+    API -> DB : Guardar completed_at
+  end
+end
+@enduml
