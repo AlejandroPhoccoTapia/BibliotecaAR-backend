@@ -1,0 +1,63 @@
+@startuml
+title Paquetes de BibliotecaAR - sistema completo
+top to bottom direction
+skinparam packageStyle folder
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam dpi 200
+skinparam linetype ortho
+skinparam ranksep 22
+skinparam nodesep 18
+skinparam ArrowColor #64748B
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  FontColor #0F172A
+}
+skinparam rectangle {
+  BackgroundColor #F8FAFC
+  BorderColor #94A3B8
+  FontColor #334155
+}
+
+package "Panel docente\nReact" as WEB {
+  rectangle "Interfaz y formularios\nApp.jsx" as WEB_UI
+  rectangle "Cliente HTTP\napi.js" as WEB_API
+  WEB_UI -down..> WEB_API
+}
+
+package "Aplicación móvil\nUnity / Android" as MOBILE {
+  rectangle "Acceso y biblioteca\nStudentAppFlow.cs" as M_ACCESS
+  rectangle "Escaneo QR\nQRCodeScanner.cs" as M_SCAN
+  rectangle "Lectura y AR\nARSceneController.cs" as M_AR
+  M_ACCESS -down..> M_SCAN
+  M_SCAN -down..> M_AR
+}
+
+package "Backend\nDjango" as SERVER {
+  rectangle "API y permisos\nurls.py · views.py" as B_API
+  rectangle "Catálogo y avance\nmodels.py · serializers.py" as B_MODEL
+  rectangle "QR y PDF imprimible\nScene.save() · qr_pdf.py" as B_QR
+  B_API -down..> B_MODEL
+  B_API -down..> B_QR
+}
+
+package "Servicios y bibliotecas externos" as EXTERNAL {
+  rectangle "PostgreSQL\nSupabase" as DB
+  rectangle "Storage\nSupabase" as FILES
+  rectangle "ZXing\nlectura QR" as ZXING
+  rectangle "ARCore · TTS\nseguimiento y voz" as ARSDK
+  DB -[hidden]right-> FILES
+  FILES -[hidden]right-> ZXING
+  ZXING -[hidden]right-> ARSDK
+}
+
+WEB_API -down..> B_API : HTTP
+M_AR -down..> B_API : HTTP
+B_MODEL -down..> DB : ORM
+B_MODEL -down..> FILES
+M_SCAN -down..> ZXING : QR
+M_AR -down..> ARSDK : AR y voz
+
+@enduml

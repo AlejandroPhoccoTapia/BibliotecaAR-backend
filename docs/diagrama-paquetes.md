@@ -1,8 +1,10 @@
 # Diagrama de paquetes de BibliotecaAR
 
-Para obtener una figura con las **cajas con pestaña** del ejemplo, abre el [diagrama detallado de la app móvil en PlantUML](diagrama-paquetes-app-movil.puml) en un editor compatible o copia su contenido en el [editor oficial de PlantUML](https://editor.plantuml.com/uml/edge). También están la [imagen PNG](diagrama-paquetes-app-movil.png) y la [imagen SVG](diagrama-paquetes-app-movil.svg) listas para insertar en la tesis. El bloque Mermaid de abajo muestra el **sistema completo** directamente en GitHub; el PlantUML se concentra en Unity para conservar la legibilidad del ejemplo que compartiste.
+**Para pegar una sola figura en la tesis**, usa la versión vertical del sistema completo: [PNG de alta resolución](diagrama-paquetes-sistema-vertical.png), [SVG nítido a cualquier tamaño](diagrama-paquetes-sistema-vertical.svg) o [PlantUML editable](diagrama-paquetes-sistema-vertical.puml). Incluye el panel React, la app Unity, la API Django, PostgreSQL, Storage y las bibliotecas Android. Su disposición está pensada para una página vertical; en Word, insértala con «En línea con el texto», fija un ancho aproximado de **14 cm** y conserva la proporción. Quedará cerca de 20 cm de alto, dejando espacio para el pie de figura.
 
-![Diagrama de paquetes de la app móvil y sus dependencias externas](diagrama-paquetes-app-movil.svg)
+![Diagrama de paquetes vertical del sistema completo BibliotecaAR](diagrama-paquetes-sistema-vertical.svg)
+
+El [detalle de paquetes de la app móvil en PlantUML](diagrama-paquetes-app-movil.puml) también se reorganizó verticalmente. Tiene [PNG](diagrama-paquetes-app-movil.png) y [SVG](diagrama-paquetes-app-movil.svg). Úsalo si necesitas explicar específicamente los módulos internos de Unity; la figura anterior es la recomendada para resumir el proyecto completo.
 
 En esta vista, Django se dibuja fuera de la app móvil porque es otro repositorio del mismo proyecto. La conexión de Unity llega a la API de Django; **Unity no se conecta directamente a PostgreSQL**.
 
@@ -85,4 +87,4 @@ flowchart LR
 
 La base de datos y el almacenamiento aparecen como **servicios externos**, no como paquetes internos del código. En desarrollo se usa SQLite y media local; PostgreSQL y Supabase Storage representan el despliegue configurado. La autenticación de docentes y estudiantes se implementa en **Django**: el proyecto no usa Supabase Auth ni Google Identity. Vercel y Render alojan aplicaciones, por lo que su ubicación física corresponde a un **diagrama de despliegue**, no a estas dependencias de paquetes.
 
-Para una explicación general de la arquitectura en la tesis, **el diagrama Mermaid del sistema completo es suficiente**. La versión PlantUML es un detalle opcional de la app móvil, con la misma notación visual del ejemplo; úsala si necesitas explicar sus paquetes internos y conexiones externas. No hace falta insertar ambas figuras si repetirían la misma explicación en tu documento.
+Para una explicación general de la arquitectura en la tesis, **la figura vertical del sistema completo es suficiente**. El detalle de Unity es opcional; úsalo si el texto necesita explicar sus paquetes internos y conexiones externas. No hace falta insertar ambas figuras si repetirían la misma explicación en el documento.

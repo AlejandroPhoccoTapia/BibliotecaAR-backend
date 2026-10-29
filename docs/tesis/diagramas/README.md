@@ -33,13 +33,13 @@ Cada figura tiene un PNG para Word, un SVG para conservar nitidez al ampliar y u
 | Navegación: panel docente | [PNG](07-navegacion-panel-docente.png) | [SVG](07-navegacion-panel-docente.svg) | [PlantUML](07-navegacion-panel-docente.puml) | Pantallas React y acceso a sus formularios. |
 | Navegación: app móvil | [PNG](08-navegacion-app-movil.png) | [SVG](08-navegacion-app-movil.svg) | [PlantUML](08-navegacion-app-movil.puml) | Acceso estudiantil y docente, biblioteca, escáner y AR. |
 
-El [diagrama de paquetes del sistema completo](../../diagrama-paquetes.md) ya estaba documentado. Para una figura con la notación de cajas UML se incluye también el [paquete de la app móvil en PNG](../../diagrama-paquetes-app-movil.png), [SVG](../../diagrama-paquetes-app-movil.svg) y [PlantUML](../../diagrama-paquetes-app-movil.puml). En el PDF de Alejandro, la figura de paquetes va donde ahora solo aparece ese encabezado.
+El [diagrama de paquetes del sistema completo](../../diagrama-paquetes.md) ya estaba documentado. Para insertar una sola figura en la tesis, usa su [versión vertical en PNG](../../diagrama-paquetes-sistema-vertical.png) o [SVG](../../diagrama-paquetes-sistema-vertical.svg), con [PlantUML editable](../../diagrama-paquetes-sistema-vertical.puml). El [detalle móvil en PNG](../../diagrama-paquetes-app-movil.png), [SVG](../../diagrama-paquetes-app-movil.svg) y [PlantUML](../../diagrama-paquetes-app-movil.puml) es opcional. En el PDF de Alejandro, la figura de paquetes va donde ahora solo aparece ese encabezado.
 
 ## Orden sugerido en el capítulo de diseño
 
 1. Conservar el esquema general y las tecnologías existentes.
 2. Sustituir el ER anterior por `01-entidad-relacion` y explicar las tablas `StudentSession` y `StudentReadingProgress`, que ya existen en el código.
-3. Poner el diagrama de paquetes del sistema después de la arquitectura; usar el detalle móvil solo si el texto explica sus módulos internos.
+3. Poner el diagrama de paquetes vertical del sistema después de la arquitectura; usar el detalle móvil solo si el texto explica sus módulos internos.
 4. Añadir clases, dos secuencias y dos actividades en la sección de diseño de software.
 5. Añadir las dos figuras de navegación junto a la descripción de las interfaces. Si el documento solo trata una interfaz en detalle, usar solo la que corresponda.
 

@@ -1,6 +1,6 @@
 @startuml
 title Diagrama de paquetes - aplicación móvil BibliotecaAR
-left to right direction
+top to bottom direction
 skinparam packageStyle folder
 skinparam shadowing false
 skinparam backgroundColor white
