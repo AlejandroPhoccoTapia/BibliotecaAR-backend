@@ -2,6 +2,8 @@
 
 Estas figuras se prepararon a partir del código de los tres repositorios de BibliotecaAR y de la comparación visual de los tres borradores de tesis entregados el 29 de octubre de 2026. Los PDF de los compañeros sirvieron para identificar **tipos de figuras**; los procesos y las entidades de estas figuras corresponden al proyecto de Alejandro Josué Phocco Tapia.
 
+El [catálogo de interfaces](../catalogo-interfaces.md) usa los códigos IU que aparecen en los diagramas de navegabilidad. También existe una [versión Word](../catalogo-interfaces.docx) lista para copiar en la tesis.
+
 ## Qué hay en los borradores
 
 | Tipo de figura | Tesis de Alejandro | Referencia 1 | Referencia 2 | Acción |

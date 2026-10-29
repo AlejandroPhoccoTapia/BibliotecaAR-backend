@@ -27,6 +27,8 @@ El [diagrama de paquetes del proyecto](docs/diagrama-paquetes.md) muestra las re
 
 Las [figuras para la tesis](docs/tesis/diagramas/README.md) comparan los tipos de diagramas presentes en los borradores, señalan los que faltaban en el de Alejandro y ofrecen versiones editables, PNG y SVG basadas en el código actual.
 
+El [catálogo de interfaces](docs/tesis/catalogo-interfaces.md) identifica las vistas web y móviles con códigos IU. También está disponible [en Word](docs/tesis/catalogo-interfaces.docx) para incorporarlo a la tesis.
+
 **Vocabulario:** un «capítulo» del panel es un registro `Scene` de Django. No es una escena Unity: `QRScanScene` y `ARScene` son las pantallas del cliente móvil. El QR contiene un identificador, no una URL. `prefab_key` identifica un recurso local Unity; `glb_model` es un archivo descargable.
 
 ## 2. Tecnologías y estructura

@@ -12,14 +12,14 @@ skinparam state {
 }
 hide empty description
 
-state "Acceso estudiante\n(código o rostro)" as LOGIN
-state "Biblioteca / Retomar" as LIBRARY
-state "Libro y capítulos" as BOOK
-state "Lectura del capítulo" as READ
-state "Escáner QR" as SCAN
-state "Escena AR\n(modelo, texto y audio)" as AR
-state "Acceso docente" as TEACHER_LOGIN
-state "Vista docente lista" as TEACHER_READY
+state "IU-09 Acceso estudiante\n(código o rostro)" as LOGIN
+state "IU-10 Biblioteca / Retomar" as LIBRARY
+state "IU-11 Libro y capítulos" as BOOK
+state "IU-12 Lectura del capítulo" as READ
+state "IU-13 Escáner QR" as SCAN
+state "IU-14 Escena AR\n(modelo, texto y audio)" as AR
+state "IU-15 Acceso docente" as TEACHER_LOGIN
+state "IU-16 Vista docente lista" as TEACHER_READY
 
 [*] -down-> LOGIN
 LOGIN -down-> LIBRARY : identificación aceptada
@@ -33,12 +33,8 @@ TEACHER_LOGIN -down-> TEACHER_READY : credenciales válidas
 TEACHER_READY -left-> SCAN : escanear para ajustar
 
 note right of AR
-  En vista docente, el ajuste del modelo
-  es un panel dentro de ARScene.
+  IU-17 Ajuste del modelo es un panel
+  dentro de ARScene, en vista docente.
 end note
 
-note bottom of LIBRARY
-  La navegación permite volver, cambiar
-  de estudiante y escanear otro QR.
-end note
 @enduml
