@@ -23,6 +23,8 @@ Android Unity -- QR --> GET /api/unity/scenes/<qr_code>/
 
 El docente crea un libro, añade capítulos con recursos, publica el libro y obtiene sus QR. Unity lee un QR, consulta la API y coloca el contenido 3D sobre la imagen reconocida.
 
+El [diagrama de paquetes del proyecto](docs/diagrama-paquetes.md) muestra las responsabilidades y dependencias entre los tres repositorios y sus módulos principales.
+
 **Vocabulario:** un «capítulo» del panel es un registro `Scene` de Django. No es una escena Unity: `QRScanScene` y `ARScene` son las pantallas del cliente móvil. El QR contiene un identificador, no una URL. `prefab_key` identifica un recurso local Unity; `glb_model` es un archivo descargable.
 
 ## 2. Tecnologías y estructura
