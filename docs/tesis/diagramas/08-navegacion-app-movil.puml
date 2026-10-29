@@ -19,7 +19,6 @@ state "IU-12 Lectura del capítulo" as READ
 state "IU-13 Escáner QR" as SCAN
 state "IU-14 Escena AR\n(modelo, texto y audio)" as AR
 state "IU-15 Acceso docente" as TEACHER_LOGIN
-state "IU-16 Vista docente lista" as TEACHER_READY
 
 [*] -down-> LOGIN
 LOGIN -down-> LIBRARY : identificación aceptada
@@ -29,8 +28,13 @@ LIBRARY -down-> SCAN : escanear QR
 READ -right-> SCAN : ver en AR
 SCAN -down-> AR : QR leído
 LOGIN -right-> TEACHER_LOGIN : elegir Docente
-TEACHER_LOGIN -down-> TEACHER_READY : credenciales válidas
-TEACHER_READY -left-> SCAN : escanear para ajustar
+TEACHER_LOGIN -down-> SCAN : credenciales válidas
+
+note right of TEACHER_LOGIN
+  IU-16 Vista docente activa puede aparecer
+  al volver a la escena de escaneo.
+  Desde allí se inicia IU-13.
+end note
 
 note right of AR
   IU-17 Ajuste del modelo es un panel

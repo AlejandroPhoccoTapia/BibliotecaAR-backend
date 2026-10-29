@@ -29,6 +29,8 @@ Las [figuras para la tesis](docs/tesis/diagramas/README.md) comparan los tipos d
 
 El [catálogo de interfaces](docs/tesis/catalogo-interfaces.md) identifica las vistas web y móviles con códigos IU. También está disponible [en Word](docs/tesis/catalogo-interfaces.docx) para incorporarlo a la tesis.
 
+Las [tablas de transiciones entre interfaces](docs/tesis/transiciones-interfaces.md) documentan los recorridos web y móviles con esos códigos; incluyen una [versión Word](docs/tesis/transiciones-interfaces.docx).
+
 **Vocabulario:** un «capítulo» del panel es un registro `Scene` de Django. No es una escena Unity: `QRScanScene` y `ARScene` son las pantallas del cliente móvil. El QR contiene un identificador, no una URL. `prefab_key` identifica un recurso local Unity; `glb_model` es un archivo descargable.
 
 ## 2. Tecnologías y estructura

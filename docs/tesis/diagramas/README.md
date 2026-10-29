@@ -4,6 +4,8 @@ Estas figuras se prepararon a partir del código de los tres repositorios de Bib
 
 El [catálogo de interfaces](../catalogo-interfaces.md) usa los códigos IU que aparecen en los diagramas de navegabilidad. También existe una [versión Word](../catalogo-interfaces.docx) lista para copiar en la tesis.
 
+Después de los diagramas de navegabilidad pueden colocarse las [tablas de transiciones web y móvil](../transiciones-interfaces.md), disponibles también [en Word](../transiciones-interfaces.docx).
+
 ## Qué hay en los borradores
 
 | Tipo de figura | Tesis de Alejandro | Referencia 1 | Referencia 2 | Acción |

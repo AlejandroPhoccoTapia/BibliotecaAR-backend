@@ -25,3 +25,5 @@ BibliotecaAR tiene un panel web para docentes y una aplicación Android para est
 **Criterio de catalogación.** `IU-08` es una ventana emergente y `IU-17` es un panel superpuesto. Los formularios de inicio y registro docente comparten `IU-01`; el acceso por código y por rostro comparten `IU-09`. El visor GLB, la tarjeta QR y la descarga PDF son acciones dentro de `IU-04` o `IU-05`, no pantallas independientes. Los estados de carga y error aparecen dentro de las interfaces correspondientes. El acceso facial está implementado como función experimental y no equivale a una validación biométrica de producción.
 
 *Fuente: elaboración propia a partir del código de BibliotecaAR, BiblitoecaAR-fronted y BibliotecaAR-backend, revisado el 29 de octubre de 2026.*
+
+Las [tablas de transiciones](transiciones-interfaces.md) usan estos mismos códigos para explicar qué acción lleva de una interfaz a otra.
