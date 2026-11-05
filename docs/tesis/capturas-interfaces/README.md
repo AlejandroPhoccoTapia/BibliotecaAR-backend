@@ -1,6 +1,6 @@
 # Capturas de interfaces del panel docente
 
-Fecha de captura: 5 de noviembre de 2026. La sección editable para la tesis está en `../interfaces-capturas.docx`; contiene 13 figuras numeradas provisionalmente de la 09 a la 21. Ajustar los números al insertar la sección en la versión final.
+Fecha de captura: 5 de noviembre de 2026. `../interfaces-capturas.docx` conserva las 13 figuras web capturadas (09 a 21). `../interfaces-web-y-movil.docx` añade nueve espacios para las interfaces Android IU-09 a IU-17 (figuras 22 a 30), con descripción, ruta y elementos que deben verse. Toda la numeración es provisional y debe ajustarse al insertar la sección en la tesis final.
 
 ## Procedencia
 
@@ -9,4 +9,6 @@ Fecha de captura: 5 de noviembre de 2026. La sección editable para la tesis est
 
 El documento usa las capturas más legibles de ambas fuentes. El directorio conserva algunas vistas alternativas para elegir otra composición. No incluye la fotografía de un estudiante que aparecía en la cuenta del servicio publicado.
 
-Las interfaces móviles IU-09 a IU-17 requieren capturas nuevas de la aplicación Android en un teléfono. Las imágenes de AR enviadas anteriormente en la conversación mostraban versiones previas de la pantalla y no se incluyen como evidencia de la versión actual.
+Las interfaces móviles IU-09 a IU-17 requieren capturas nuevas de la aplicación Android en un teléfono. Las imágenes de AR enviadas anteriormente en la conversación mostraban versiones previas de la pantalla y no se incluyen como evidencia de la versión actual. El 5 de noviembre de 2026 no había un dispositivo conectado por ADB ni un emulador Android disponible en este equipo.
+
+Para completarlas, usar un estudiante y docente de prueba, tomar cada captura vertical con la función nativa del teléfono y nombrarla `IU-09.png` ... `IU-17.png`. En el Word combinado, sustituir cada recuadro por su imagen, cambiar la fuente a «Fuente: elaboración propia» y borrar las instrucciones «Cómo llegar» y «Qué debe verse» antes de entregar la tesis. En IU-14 e IU-17 conviene tomar una captura adicional si una sola imagen no permite ver simultáneamente el modelo y los controles.
