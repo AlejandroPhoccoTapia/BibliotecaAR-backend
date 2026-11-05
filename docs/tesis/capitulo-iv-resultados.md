@@ -66,6 +66,12 @@ El objetivo fue comprobar, de manera repetible, las reglas del servidor y las tr
 
 *Tabla 4.3. Resultados de las pruebas locales ejecutadas el 5 de noviembre de 2026. Fuente: elaboración propia a partir de la salida de los comandos de prueba.*
 
+La Figura 4.1 presenta un extracto visual de los registros de ambas baterías, generado a partir de sus salidas reales. El resumen no sustituye los archivos de prueba ni amplía su alcance al teléfono o a la nube.
+
+![Resultados de las pruebas automáticas locales](capturas-pruebas/resultados-automaticos-2026-11-05.png)
+
+*Figura 4.1. Resultado de las baterías automáticas de Django y React. Fuente: elaboración propia a partir de los registros de ejecución del 5 de noviembre de 2026.*
+
 En conjunto, **59 de 59 pruebas automatizadas terminaron correctamente** en esta versión: 52 del backend y 7 del frontend. La compilación web mostró una advertencia porque el módulo diferido de vista previa GLB supera 500 kB tras minificación. La advertencia no detuvo la compilación; tampoco permite concluir cuánto demora esa vista en una conexión real. Las 52 pruebas Django utilizaron SQLite y archivos temporales, por lo que no comprueban PostgreSQL ni Supabase Storage. La prueba facial incluida usa datos sintéticos y no demuestra precisión biométrica con estudiantes.
 
 ## 4.5. Pruebas de implantación
@@ -93,7 +99,7 @@ Cada caso se ejecuta paso por paso, anotando fecha, responsable, versiones, disp
 
 ### 4.5.3. Desarrollo de los casos
 
-**CP-01. Gestión docente y publicación (RF01–RF05).** Precondición: API desplegada operativa; navegador sin sesión; archivos de prueba válidos; docente de prueba disponible o correo y usuario nuevos. Evidencia por incorporar: capturas IU-01 a IU-05 y PDF del QR.
+**CP-01. Gestión docente y publicación (RF01–RF05).** Precondición: API desplegada operativa; navegador sin sesión; archivos de prueba válidos; docente de prueba disponible o correo y usuario nuevos. La Figura 4.2 muestra el QR y la opción de descarga del panel publicado con datos de prueba; falta registrar la ejecución completa de los pasos y la medición del papel impreso.
 
 | Paso | Acción | Resultado esperado | Resultado obtenido / Cumple |
 | --- | --- | --- | --- |
@@ -104,7 +110,11 @@ Cada caso se ejecuta paso por paso, anotando fecha, responsable, versiones, disp
 
 *Tabla 4.5. Caso CP-01. Fuente: elaboración propia.*
 
-**CP-02. Estudiante, asignaciones y avance (RF06–RF08).** Precondición: libro publicado de CP-01, estudiante ficticio y teléfono con la aplicación instalada. El reconocimiento facial se realiza solo con una persona voluntaria y su consentimiento, y se informa aparte del acceso por código. Evidencia por incorporar: IU-06 a IU-12 y respuestas de la API sin datos sensibles.
+![Opción de descarga del PDF del QR](capturas-interfaces/IU-05d-capitulo-pdf-qr.jpg)
+
+*Figura 4.2. QR del capítulo y opción para descargar el PDF imprimible. Fuente: captura propia del frontend publicado con contenido de prueba.*
+
+**CP-02. Estudiante, asignaciones y avance (RF06–RF08).** Precondición: libro publicado de CP-01, estudiante ficticio y teléfono con la aplicación instalada. El reconocimiento facial se realiza solo con una persona voluntaria y su consentimiento, y se informa aparte del acceso por código. La Figura 4.3 muestra el formulario de asignación con datos ficticios de la versión local; la persistencia y el acceso móvil requieren evidencia propia.
 
 | Paso | Acción | Resultado esperado | Resultado obtenido / Cumple |
 | --- | --- | --- | --- |
@@ -115,6 +125,10 @@ Cada caso se ejecuta paso por paso, anotando fecha, responsable, versiones, disp
 | 5 | Probar acceso facial con rostro registrado y no registrado, con consentimiento. | El rostro registrado puede identificarse y el no registrado no debe obtener acceso; se anotan los errores observados. | No ejecutado / NE. |
 
 *Tabla 4.6. Caso CP-02. Fuente: elaboración propia.*
+
+![Asignación de libros a un estudiante de demostración](capturas-interfaces/IU-07-estudiante-asignaciones-demo.jpg)
+
+*Figura 4.3. Selección de libros en el perfil de estudiante. Fuente: captura propia de la interfaz local con datos ficticios en memoria; no acredita persistencia remota.*
 
 **CP-03. Escaneo y consulta de escenas (RF09–RF10).** Precondición: QR publicados impresos, un QR de libro en borrador y teléfono con permiso de cámara. Evidencia por incorporar: IU-13, mensaje de carga, IU-14 y respuestas de error.
 

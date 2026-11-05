@@ -1,0 +1,13 @@
+Creating test database for alias 'default'...
+
+C:\Users\User\Desktop\tesis\BibliotecaAR-backend\.venv\Lib\site-packages\django\core\handlers\base.py:62: UserWarning: No directory at: C:\Users\User\Desktop\tesis\BibliotecaAR-backend\staticfiles\
+  mw_instance = middleware(adapted_handler)
+....................................................
+----------------------------------------------------------------------
+Ran 52 tests in 0.650s
+
+OK
+Destroying test database for alias 'default'...
+
+Found 52 test(s).
+System check identified no issues (0 silenced).

@@ -1,0 +1,19 @@
+
+> bibliotecaar-frontend@0.1.0 test
+> node --test tests/*.test.mjs
+
+✔ API contract: CSRF, PUT with photo and empty assignments, errors, 204 and network failure (16.9578ms)
+✔ QR PDF download requests authenticated binary content (1.0922ms)
+✔ JSON retains empty fields, false, zero and an empty assignment list (0.8901ms)
+✔ multipart sends multiple books as repeated IDs alongside an image (13.1612ms)
+✔ backend errors retain individual field context (0.1265ms)
+✔ search ignores accents, case and surrounding whitespace (0.137ms)
+✔ new chapter order follows maximum, including gaps and duplicates (0.1049ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.1978
