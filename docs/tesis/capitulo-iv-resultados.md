@@ -2,7 +2,7 @@
 
 > **Borrador sustentado en evidencia disponible al 5 de noviembre de 2026.** Las pruebas en un teléfono Android con ARCore y la comprobación del despliegue con Supabase todavía no se han ejecutado. Los casos pendientes se describen para completarlos antes de entregar la tesis. Las referencias IU corresponden al catálogo de interfaces y las RF a la especificación de requisitos del capítulo III.
 
-La [sección 4.3 de pruebas en formato Word](pruebas-ejecutadas-capitulo-iv.docx) contiene los casos automatizados y resultados verificados el 5 de noviembre de 2026, listos para incorporar a la tesis. Sustituye la sección 4.3 de este borrador al preparar la versión final.
+La [sección 4.3 de pruebas en formato Word](pruebas-ejecutadas-capitulo-iv.docx) contiene los casos automatizados, resultados verificados y tres figuras con extractos de los registros del 5 de noviembre de 2026, listos para incorporar a la tesis. Sustituye la sección 4.3 de este borrador al preparar la versión final.
 
 ## 4.1. Generalidades
 
