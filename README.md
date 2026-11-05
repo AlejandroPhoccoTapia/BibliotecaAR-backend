@@ -31,6 +31,8 @@ El [catálogo de interfaces](docs/tesis/catalogo-interfaces.md) identifica las v
 
 Las [tablas de transiciones entre interfaces](docs/tesis/transiciones-interfaces.md) documentan los recorridos web y móviles con esos códigos; incluyen una [versión Word](docs/tesis/transiciones-interfaces.docx).
 
+El [borrador del capítulo IV](docs/tesis/capitulo-iv-resultados.md) presenta la trazabilidad RF01–RF16, las pruebas locales ejecutadas y los casos pendientes en teléfono y nube. Las [conclusiones y recomendaciones](docs/tesis/conclusiones-recomendaciones.md) se corresponden con el objetivo general y los ocho objetivos específicos. Existe una [versión Word conjunta](docs/tesis/capitulo-iv-conclusiones-recomendaciones.docx) para incorporar a la tesis; debe actualizarse después de las pruebas de campo.
+
 **Vocabulario:** un «capítulo» del panel es un registro `Scene` de Django. No es una escena Unity: `QRScanScene` y `ARScene` son las pantallas del cliente móvil. El QR contiene un identificador, no una URL. `prefab_key` identifica un recurso local Unity; `glb_model` es un archivo descargable.
 
 ## 2. Tecnologías y estructura
