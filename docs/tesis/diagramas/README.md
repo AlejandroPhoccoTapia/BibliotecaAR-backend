@@ -6,6 +6,8 @@ El [catálogo de interfaces](../catalogo-interfaces.md) usa los códigos IU que 
 
 Después de los diagramas de navegabilidad pueden colocarse las [tablas de transiciones web y móvil](../transiciones-interfaces.md), disponibles también [en Word](../transiciones-interfaces.docx).
 
+Las [fichas de especificación RF01 a RF16](../especificacion-requisitos.md) están listas para revisar y también disponibles [en Word](../especificacion-requisitos.docx). Cada ficha incluye descripción, precondiciones, acciones, poscondiciones y flujo alternativo.
+
 ## Qué hay en los borradores
 
 | Tipo de figura | Tesis de Alejandro | Referencia 1 | Referencia 2 | Acción |
