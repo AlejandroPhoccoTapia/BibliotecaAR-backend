@@ -36,11 +36,20 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# The deployed panel uses a Vercel production alias and a main-branch alias.
+# Keep these in code as well as render.yaml: an existing Render web service may
+# retain dashboard environment values when render.yaml is changed.
+PANEL_ORIGINS = [
+    'https://biblitoeca-ar-fronted.vercel.app',
+    'https://biblitoeca-ar-fronted-git-main-kaja3.vercel.app',
+]
+
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
     'http://localhost:5173',
     'http://localhost:5174',
+    *PANEL_ORIGINS,
     *[
         origin.strip()
         for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
@@ -95,9 +104,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
-    if origin.strip()
+    *PANEL_ORIGINS,
+    *[
+        origin.strip()
+        for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+        if origin.strip()
+    ],
 ]
 CORS_ALLOW_CREDENTIALS = True
 

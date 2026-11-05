@@ -222,8 +222,8 @@ Render sirve Django; Supabase PostgreSQL guarda datos y Supabase Storage compati
 | `DEBUG` | `True` local; configurar `False` en producción. |
 | `SECRET_KEY` | Clave Django. Render genera una; no usar la clave de desarrollo en producción. |
 | `ALLOWED_HOSTS` | Hosts separados por comas; `*` por defecto local. |
-| `CSRF_TRUSTED_ORIGINS` | Orígenes completos adicionales; localhost/127.0.0.1:5173 y :5174 ya están contemplados. |
-| `CORS_ALLOWED_ORIGINS` | Orígenes web separados por comas; vacío por defecto. |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes completos adicionales; localhost/127.0.0.1:5173 y :5174, el dominio principal del panel y su despliegue `git-main` actual ya están contemplados. |
+| `CORS_ALLOWED_ORIGINS` | Orígenes web adicionales separados por comas; el dominio principal del panel y su despliegue `git-main` actual ya están contemplados. |
 | `DATABASE_URL` | PostgreSQL; si falta, SQLite. |
 | `DB_SSL_REQUIRE` | `True` por defecto para conexión por URL. |
 | `MEDIA_ROOT` | Directorio local; por defecto `media/`. |
@@ -244,7 +244,7 @@ Render sirve Django; Supabase PostgreSQL guarda datos y Supabase Storage compati
 | `MAX_AUDIO_UPLOAD_BYTES` | Audio: `52428800` (50 MiB). |
 | `MAX_GLB_UPLOAD_BYTES` | Modelos GLB: `104857600` (100 MiB). |
 
-Render ejecuta `bash build.sh` para instalar dependencias, recolectar estáticos y migrar, y `gunicorn config.wsgi:application` para servir. Configurar base, bucket y credenciales en el entorno; comprobar los dominios incluidos en `render.yaml`.
+Render ejecuta `bash build.sh` para instalar dependencias, recolectar estáticos y migrar, y `gunicorn config.wsgi:application` para servir. Configurar base, bucket y credenciales en el entorno; comprobar los dominios incluidos en `render.yaml`. Los orígenes del panel usados actualmente también están en `settings.py` porque un servicio Render existente puede conservar sus variables del Dashboard aunque cambie el manifiesto. Si cambia la URL de Vercel, añadir el nuevo origen exacto a CORS y CSRF y volver a desplegar el backend. Un `OPTIONS 200` por sí solo no demuestra acceso: la respuesta debe incluir `Access-Control-Allow-Origin` con el origen solicitado y `Access-Control-Allow-Credentials: true`.
 
 Con DEBUG=False, cookies de sesión/CSRF usan Secure y SameSite=None. Configurar HTTPS y el dominio del panel en CORS y CSRF; las políticas del navegador sobre cookies entre sitios también influyen.
 

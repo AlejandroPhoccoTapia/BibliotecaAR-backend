@@ -43,6 +43,36 @@ class ApiRegressionTests(TestCase):
         response = client.post(reverse('teacher-login'), {'username': 'teacher', 'password': 'correct-pass'}, format='json', HTTP_X_CSRFTOKEN=token)
         self.assertEqual(response.status_code, 200)
 
+    def test_deployed_vercel_origin_can_preflight_and_log_in(self):
+        origin = 'https://biblitoeca-ar-fronted-git-main-kaja3.vercel.app'
+        client = APIClient(enforce_csrf_checks=True)
+        preflight = client.options(
+            reverse('teacher-register'),
+            HTTP_ORIGIN=origin,
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD='POST',
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS='content-type,x-csrftoken',
+        )
+        self.assertEqual(preflight.status_code, 200)
+        self.assertEqual(preflight.get('Access-Control-Allow-Origin'), origin)
+        self.assertEqual(preflight.get('Access-Control-Allow-Credentials'), 'true')
+
+        session = client.get(reverse('teacher-session'), HTTP_ORIGIN=origin, secure=True)
+        self.assertEqual(session.get('Access-Control-Allow-Origin'), origin)
+        token = session.data['csrf_token']
+        login_response = client.post(
+            reverse('teacher-login'),
+            {'username': 'teacher', 'password': 'correct-pass'},
+            format='json', HTTP_ORIGIN=origin, HTTP_X_CSRFTOKEN=token, secure=True,
+        )
+        self.assertEqual(login_response.status_code, 200)
+
+        other_origin = client.options(
+            reverse('teacher-register'),
+            HTTP_ORIGIN='https://unrelated.example',
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD='POST',
+        )
+        self.assertIsNone(other_origin.get('Access-Control-Allow-Origin'))
+
     def test_login_is_rate_limited(self):
         self.client.logout()
         for _ in range(20):
